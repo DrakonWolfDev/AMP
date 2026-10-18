@@ -1,20 +1,34 @@
-# Test matrix
+# Test matrix — 2026-10-18
 
-All application checks below are **not run**. No renderer or application exists yet.
+Windows development desktop: Python 3.12.10, Qt/PySide6 Essentials 6.12.0, python-mpv 1.0.8, PyOpenGL 3.1.10, mpv v0.41.0-dev-gfffe7a23a; Intel Iris Xe OpenGL 3.3.0 (31.0.101.3729). Native scaling: 125%. Effective 100% and 150% used Qt overrides, not changed OS settings.
 
-| Area | Required cases | Windows | Mint 22.3 |
+| Area | Windows result | Mint 22.3 |
+| --- | --- | --- |
+| Unit tests | 13 passed: transforms, ordering/filtering/deleted anchor/boundaries, PNG collisions/pixels/dimensions/encoding/storage/Pictures errors, missing-runtime guidance | Not run locally |
+| Source/setup | Ruff lint/format and pip check passed; setup install/checksum/extraction passed in existing environment; clean machine untested | Instructions only |
+| M0 renderer | Generated portrait PNG and 640×360 H.264 MP4; playing/paused zoom/pan, seek/resize/switch/resume/close passed | Not run |
+| Capture | Seven captures per DPR; readback does not increment render count; paused pixels exactly equal Qt framebuffer; inspected PNGs exclude toolbar/chrome | Not run |
+| Navigation/input | clip2 before clip10; corrupt image skipped; Right over seek slider changes file; new file resets fit; Esc leaves fullscreen | Not run |
+| Video formats | Synthetic H.264 MP4/MKV and VP9 WebM produce live frames; all fixtures have no audio | Not run |
+| Transport | Pause state, duration >10 seconds, seek to 5 seconds within 1 second tolerance passed | Not run |
+| Independent windows | Different folders/cores, independent zoom/volume UI state, one playing while one paused, separate PNGs, second survives first closing | Not run |
+| Storage | Probe directory saves and unit error/collision tests passed; native Pictures permissions not exercised | Not run |
+| Images | Portrait PNG inspected; EXIF-rotated JPEG, huge/ultrawide, BMP/WebP untested | Not run |
+| Audio | Not tested; volume/mute wired; audible playback and shutdown pending | Not run |
+| Controls polish | Fixed bars; hover/fade not implemented | Not run |
+| Resilience | Basic switching/resize/seek/fullscreen/close passed; rapid stress, context loss, monitor transitions, multiple processes pending | Not run |
+| Packaging | No installer or binary release | Not run |
+
+## Capture dimensions
+
+Expected dimensions use Qt QSize rounding (half pixels up).
+
+| DPR | Logical viewport before / after resize | Expected PNG before / after | Actual |
 | --- | --- | --- | --- |
-| M0 rendering | Live video in Qt-owned GL surface; image mode; aspect fit; resize/switch/close | Not run | Not run |
-| Capture | Playing/paused, off-centre zoom/pan, bars, no controls, actual versus expected physical dimensions | Not run | Not run |
-| DPI | 100%, 125%, 150%; screen transitions when available | Not run | Not run |
-| Images | Portrait, ultrawide, EXIF-rotated JPEG, large PNG, BMP, WebP | Not run | Not run |
-| Video | MP4/H.264, MKV, WebM, silent video; report actual codecs/runtime | Not run | Not run |
-| Transforms | Cursor anchor, bounds, reset, fullscreen, resize under zoom, seek while zoomed | Not run | Not run |
-| Navigation | clip2/clip10; mixed folder; deleted/corrupt/unsupported files; no recursion/wrap | Not run | Not run |
-| Controls | Shortcuts, slider focus, hover/fade, image/video modes, fullscreen exit | Not run | Not run |
-| Capture storage | OS Pictures/fallback, collision, unwritable folder, useful error | Not run | Not run |
-| Isolation | Two active videos in different folders; independent state/capture/close | Not run | Not run |
-| Resilience | Rapid navigation, close/reopen, no lingering audio or GL crashes | Not run | Not run |
-| Packaging | Clean environment install, dependency diagnostics, runtime/licence inventory | Not run | Not run |
+| 1.0 | 800×555 / 900×605 | 800×555 / 900×605 | Exact match |
+| 1.25 native | 800×555 / 900×605 | 1000×694 / 1125×756 | Exact match |
+| 1.5 | 800×555 / 900×605 | 1200×833 / 1350×908 | Exact match |
 
-Record each execution with date, OS/display backend, GPU, Python/Qt/libmpv versions, command, fixture identity, expected/actual result and evidence location. Keep private media and generated captures out of Git. Report untested paths explicitly.
+The original Python-round implementation produced 832 rather than 833 at 150%; comparison with Qt caught this and the corrected run passed. Native-DPR fit/zoomed video and portrait captures were visually inspected for crop/aspect/bars and absent controls. OS compositor latency and exact monitor pixels have not been externally compared.
+
+Reproduction commands: README.md. Successful machine-readable reports: docs/evidence. The session harness enters real Qt event loops to allow libmpv worker callbacks to run. Desktop probes require a visible desktop. CI defines unit/static checks only and does not prove renderer behaviour.
