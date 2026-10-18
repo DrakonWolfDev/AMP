@@ -1,0 +1,9 @@
+include AMP.cmd AMP_ROADMAP.md CODEX_PROMPT.md requirements-build.txt
+include requirements-windows-build.txt
+recursive-include packaging *.py *.spec *.iss
+recursive-include packaging *.desktop
+include .github/workflows/checks.yml
+recursive-include amp/assets *.svg *.png *.ico *.md
+recursive-include docs *.md *.json
+recursive-include tools *.py *.ps1
+recursive-include tests *.py

@@ -34,3 +34,12 @@ The archive contains headers and LICENSE.LGPL. It is a development dependency un
 AMP's own code is AGPL-3.0-only, matching WolfLauncher. See LICENSE, THIRD_PARTY_NOTICES.md and docs/LICENSING.md. PySide6/Qt Essentials 6.12.0 and shiboken6 6.12.0, python-mpv 1.0.8, PyOpenGL 3.1.10, and the exact libmpv build are the runtime inventory for this preview. Dependencies retain their original licences. The selected libmpv archive is labelled LGPL and carries LGPL 2.1 text; this label does not constitute a complete dependency or redistribution audit.
 
 Before shipping, inspect each exact distribution's metadata/licences and FFmpeg build configuration; complete dependency notices and corresponding-source/relinking obligations as applicable; and validate an installer on clean Mint and Windows machines. The licence texts/notices are included in Python distributions and legal information is accessible from Help → About AMP / licences. No bundled binary installer, codec-patent clearance, completed release-compliance conclusion, tag or release is provided here.
+
+## M9 local package validation
+
+See [PACKAGING.md](PACKAGING.md) for the pinned offline source/wheel builder and fresh minimal-venv smoke test. The generated report records exact artifact/dependency hashes, wheel licence metadata/notice paths and the separate libmpv DLL hash/build configuration. The runtime reports FFmpeg git-2026-10-18-89d34d6 and mpv build option `-Dgpl=false`; neither that option nor wheel metadata is a complete transitive audit. A fresh venv on this machine is not a clean-machine Windows installation. No standalone/frozen runtime or installer is produced.
+
+
+## Runtime audit update - 2026-10-18
+
+See [CODEC_AUDIT.md](CODEC_AUDIT.md) for the latest evidence. The libmpv DLL embeds FFmpeg LGPL version 3 or later notices, despite the archive containing LGPL 2.1 text. The installed Qt Essentials wheel also includes an unused FFmpeg/Multimedia stack. Mutagen 1.47.0 is now a runtime dependency under GPL-2.0-or-later. These findings refine the earlier inventory; a complete binary redistribution audit is still pending.

@@ -15,7 +15,7 @@ The root AMP_ROADMAP.md is the product specification. CODEX_PROMPT.md provides t
 | M4 | Per-window mpv backend and transport controls | Actual MP4/H.264, MKV, WebM, silent video, pause/seek/volume/switching | Callback lifetime and lingering audio |
 | M5 | Adapt shared transform to documented mpv zoom/pan units | Playing/paused zoom, corner anchor, pan, seek, resize and reset | Different renderer coordinate conventions |
 | M6 | Media-only framebuffer capture, Pictures resolution, collision-safe save and feedback | Compare visible crop/bars/frame with PNG; physical dimensions; save errors | Playback timing and high DPI |
-| M7 | Slim controls, interaction-aware hiding, shortcuts/fullscreen/help | Keyboard routing, focus/hover/menu/slider behaviour, images hide transport | Controls interfering with pan or capture |
+| M7 | Slim overlay controls, interaction-aware fading, shortcuts/fullscreen/help, local repeat/default-volume/banner preferences | Keyboard routing, focus/hover/menu/slider behaviour, images hide transport | Controls interfering with pan or capture |
 | M8 | Window ownership and independent backend lifecycle | Two active videos, folders, transforms, volumes, screenshots, independent close | Shared state and GL teardown |
 | M9 | Repeatable packaging, exact dependency/licence inventory, notices and handover | Clean installs and full matrix on Mint 22.3 and Windows | Native library/codec redistribution and untested platforms |
 

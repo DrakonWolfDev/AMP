@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=AMP
+GenericName=Media Player
+Comment=View local images, video and music
+Exec=AMP %f
+TryExec=AMP
+Icon=amp
+Terminal=false
+Categories=AudioVideo;Player;Graphics;
+MimeType=image/png;image/jpeg;image/bmp;image/webp;image/gif;image/tiff;video/mp4;video/x-m4v;video/x-matroska;video/webm;video/quicktime;video/mpeg;video/x-msvideo;video/x-ms-wmv;video/mp2t;audio/mpeg;audio/flac;audio/x-flac;audio/x-wav;audio/wav;audio/ogg;audio/opus;audio/mp4;audio/aac;audio/x-ms-wma;audio/x-aiff;
+StartupNotify=true

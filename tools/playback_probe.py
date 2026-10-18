@@ -13,6 +13,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtTest import QTest
 
 from amp.app import Window, create_application
+from amp.settings import Preferences
 from tools.session_probe import wait
 
 
@@ -88,7 +89,9 @@ def main():
         print(label, flush=True)
 
     try:
-        first = Window()
+        preferences = Preferences(output / "unused-preferences.ini")
+        preferences.repeat, preferences.volume = False, 0
+        first = Window(preferences)
         windows.append(first)
         first.controls.volume.setValue(0)
         first.viewport.failed.connect(lambda message: report["errors"].append(message))
@@ -104,18 +107,56 @@ def main():
         )
         check(state["volume"] == 0, "Probe produces no test tone at the output")
         first.controls.mute.setChecked(True)
-        first.controls.volume.setValue(37)
+        first.viewport.backend.set("volume", 37)
         wait(100)
         state = snapshot(first, "volume", "mute")
         check(state["volume"] == 37 and state["mute"], "Volume/mute reach mpv")
+        reopened = Window(Preferences(preferences.path))
+        windows.append(reopened)
+        check(
+            reopened.controls.mute.isChecked() and reopened.controls.volume.value() == 0,
+            "A newly opened player restores saved mute with a zero slider",
+        )
+        reopened.show()
+        reopened.open_path(output / "silent.mkv")
+        wait(400)
+        restored = snapshot(reopened, "volume", "mute")
+        check(
+            restored["mute"] and restored["volume"] == reopened.controls.volume_level,
+            "Opening media while muted preserves its underlying restore volume",
+        )
+        reopened.close()
         # Keep muted while verifying observer-to-widget synchronisation.
         first.viewport.backend.set("volume", 19)
         wait(100)
-        check(first.controls.volume.value() == 19, "Decoder volume changes update slider")
-        first.controls.volume.setValue(0)
+        check(
+            first.controls.volume.value() == 0 and first.controls.volume_level == 19,
+            "Muted slider stays zero while retaining decoder volume changes",
+        )
+        first.viewport.backend.set("volume", 0)
         first.viewport.backend.set("mute", False)
         wait(100)
         check(not first.controls.mute.isChecked(), "Decoder mute changes update button")
+        first.controls.speed.setValue(40)
+        wait(100)
+        check(snapshot(first, "speed")["speed"] == 2, "Speed slider sets decoder to 2×")
+        start = first.controls.position
+        wait(500)
+        fast_delta = first.controls.position - start
+        first.controls.speed.setValue(10)
+        wait(150)
+        start = first.controls.position
+        wait(500)
+        slow_delta = first.controls.position - start
+        check(
+            0.6 < fast_delta < 1.5 and 0.1 < slow_delta < 0.5,
+            "Video clock advances at selected fast and slow playback rates",
+        )
+        first.controls.speed_label.click()
+        wait(100)
+        check(snapshot(first, "speed")["speed"] == 1, "Speed label restores normal playback")
+        first.seek(0, "absolute")
+        wait(100)
         QTest.mouseClick(first.controls.play, Qt.MouseButton.LeftButton)
         wait(100)
         paused_at = first.controls.position
@@ -134,8 +175,13 @@ def main():
         QTest.mouseClick(first.controls.seek_buttons[1], Qt.MouseButton.LeftButton)
         wait(200)
         check(first.controls.position > 7, "Forward button clamps at media end")
-        first.pause()
-        wait(400)
+        # The clamped seek above may already be EOF. Test natural completion
+        # from a known point before it, without accidentally invoking Replay.
+        first.seek(7.5, "absolute")
+        first.video_set("pause", False)
+        deadline = time.monotonic() + 2
+        while first.controls.play.text() != "Replay" and time.monotonic() < deadline:
+            wait(20)
         check(first.controls.play.text() == "Replay", "End of file exposes Replay")
         path = first.current_path
         wait(150)
@@ -161,8 +207,13 @@ def main():
                     state["audio-params"] is None and state["current-ao"] is None,
                     "Switch to silent video releases prior audio stream/output",
                 )
+        first.controls.speed.setValue(30)
         first.open_path(output / "tone.wav")
         wait(300)
+        check(
+            not first.controls.speed_panel.isVisible() and snapshot(first, "speed")["speed"] == 1,
+            "Music hides video speed controls and restores normal playback rate",
+        )
         first.seek(100, "absolute")
         wait(200)
         check(first.controls.play.text() == "Replay", "Music end exposes Replay")
@@ -172,7 +223,7 @@ def main():
             first.controls.position < 1 and first.controls.play.text() == "Pause",
             "Music Replay restarts track",
         )
-        second = Window()
+        second = Window(preferences)
         windows.append(second)
         second.controls.volume.setValue(0)
         second.viewport.failed.connect(lambda message: report["errors"].append(message))

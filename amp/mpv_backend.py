@@ -5,18 +5,22 @@
 
 import importlib
 import os
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from threading import Lock
 
 from PySide6.QtCore import QObject, Signal
 
+from .music import read_music
 from .playback import seek_target
 
 
 def load_binding():
     if os.name == "nt":
         directory = os.environ.get("AMP_MPV_DIR")
+        if not directory and getattr(sys, "frozen", False):
+            directory = str(Path(sys._MEIPASS) / "amp_runtime")
         if directory:
             directory = str(Path(directory).resolve())
             os.environ["PATH"] = directory + os.pathsep + os.environ.get("PATH", "")
@@ -35,12 +39,14 @@ class MpvBackend(QObject):
     failed = Signal(str)
     load_failed = Signal(int, str)
     load_ready = Signal(int, object)
+    music_ready = Signal(int, object)
     observed_properties = (
         "time-pos",
         "duration",
         "pause",
         "volume",
         "mute",
+        "speed",
         "video-out-params",
         "idle-active",
         "eof-reached",
@@ -152,6 +158,25 @@ class MpvBackend(QObject):
 
     def command(self, *args):
         self.submit(self.player.command, *args)
+
+    def read_music(self, path, token):
+        def read():
+            music = read_music(path)
+            if not self.closed:
+                self.music_ready.emit(token, music)
+
+        self.submit(read)
+
+    def refresh_video(self, token):
+        def read():
+            try:
+                value = self.player._get_property("video-out-params")
+            except AttributeError:
+                value = None
+            if not self.closed:
+                self.load_ready.emit(token, {"video-out-params": value})
+
+        self.submit(read)
 
     def toggle_playback(self):
         def perform():

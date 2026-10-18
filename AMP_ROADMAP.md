@@ -1,5 +1,11 @@
 # AMP — Andy’s Media Player
-## Product roadmap | v0.1 first usable beta
+## Product roadmap | v1 readiness (original v0.1 milestones retained below)
+
+### Delivery decision - 2026-10-18
+
+The next target is a standalone v1 that does not require users to install Python. Windows packaging uses PyInstaller plus Inno Setup; a private preview is built/tested, but clean-machine installation and release compliance remain open. Linux desktop validation and standalone delivery are still required. This supersedes the original M9 wording that an installer is optional. OS file-association integration on Windows and Linux is also required for v1; registration must preserve existing defaults until the user chooses AMP. See [release readiness](docs/RELEASE_READINESS.md) for the current gates; the application version is not bumped until they pass.
+
+Agreed additions implemented during UI review include local artwork/lyrics, video speed, remembered mute, the explicit single-folder browser, compact menus and branded dialogs. Explicit Website/GitHub links open the system browser only when activated; AMP does not fetch them or perform automatic lookups. No further feature expansion is required for this readiness review.
 
 ### Scope update — 2026-10-18
 

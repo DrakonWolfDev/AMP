@@ -10,6 +10,7 @@ AMP's own code is Copyright © 2026 Andrew Hodgson trading as Wolf Forge, licens
 - Copyright holders include The Qt Company Ltd. and other contributors; retain upstream copyright/third-party files for the exact packaged components.
 - Licence texts: LICENSES/LGPL-3.0-only.txt and LICENSES/GPL-3.0-only.txt (the latter is incorporated by LGPLv3).
 - Qt also incorporates separately licensed code such as image decoders. Before any binary bundle, collect the notices and matching source obligations for the actual Qt plugins/libraries included. Do not assume this summary replaces them.
+- The installed Essentials wheel also contains unused Qt Multimedia/FFmpeg libraries. Its `avcodec-63.dll` reports LGPL version 2.1 or later and a configuration without `--enable-gpl` or `--enable-nonfree`. AMP does not import Qt Multimedia, but distributing the whole wheel includes these files; their full third-party notices and corresponding-source obligations still need covering. See docs/CODEC_AUDIT.md.
 - References: https://doc.qt.io/qt-6/licensing.html and https://doc.qt.io/qt-6/licenses-used-in-qt.html
 
 ## python-mpv — 1.0.8
@@ -26,6 +27,7 @@ AMP's own code is Copyright © 2026 Andrew Hodgson trading as Wolf Forge, licens
 - Source: https://github.com/mpv-player/mpv and https://ffmpeg.org/
 - Development build: `mpv v0.41.0-dev-gfffe7a23a`, official x86_64 Windows asset labelled LGPL. Exact asset/hash: docs/RENDERER_AND_PACKAGING.md.
 - Archive licence preserved at LICENSES/libmpv-LICENSE.LGPL. It contains LGPL 2.1 terms. mpv and FFmpeg licences depend on build configuration and linked dependencies; the archive label alone does not settle the complete dependency inventory or patent rights.
+- The 2026-10-18 audit found embedded FFmpeg library notices identifying **LGPL version 3 or later**, consistent with `--enable-version3`. The inspected configuration has no `--enable-gpl` or `--enable-nonfree`; x264/x265 encoders are disabled, while H.264/HEVC decoders remain present. Preserve LGPLv3/GPLv3 terms and the exact corresponding source, not only the archive's LGPL 2.1 file.
 - Before distributing binaries: archive the exact corresponding source/configuration/patches and third-party notices; verify all linked components and satisfy their applicable source/replacement obligations.
 - Linux system packages can have different build licences, including GPL builds. Audit the selected distribution packages as well; system installation does not erase compatibility obligations.
 
@@ -37,7 +39,15 @@ AMP's own code is Copyright © 2026 Andrew Hodgson trading as Wolf Forge, licens
 - Includes copyright notices for Michael C. Fletcher and contributors, earlier PyOpenGL contributors and other incorporated projects. Preserve the full notice rather than replacing it with a single SPDX label.
 - If a future bundle includes its optional native DLLs/Tk components, retain their additional shipped notices too. AMP does not call GLUT, GLE or Tk.
 
+## Mutagen — 1.47.0
+
+- Use: read-only local music metadata, embedded lyrics and cover images. AMP does not call its tag-writing functions or resolve linked artwork.
+- Source and documentation: https://github.com/quodlibet/mutagen and https://mutagen.readthedocs.io/en/latest/.
+- Installed distribution licence: GPL-2.0-or-later. Full upstream licence is preserved at LICENSES/mutagen-1.47.0.txt; retain its notices and source obligations when distributing.
+
 ## Python and development tools
+
+The private Windows standalone preview embeds CPython 3.12.10 and the PyInstaller 6.22.3 bootloader. Its build helper copies the interpreter's LICENSE.txt and PyInstaller's COPYING.txt (including its bootloader exception) into the bundle's LICENSES directory. PyInstaller and its hook/tool dependencies are build-time tools, not additional playback libraries. The Inno Setup 6.7.3 compiler creates the private Windows installer; its unmodified licence is preserved in LICENSES/InnoSetup-6.7.3.txt. See docs/RELEASE_READINESS.md for the exact tested artifact and outstanding release obligations.
 
 Pillow 13.0.0 is used only to generate synthetic image/EXIF test fixtures, not to decode images in AMP. Its installed metadata identifies MIT-CMU; the complete installed licence is preserved at LICENSES/Pillow-13.0.0.txt. Source: https://github.com/python-pillow/Pillow. Preserve its notices if distributing the development environment.
 

@@ -13,6 +13,8 @@ from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
 from .image_backend import read_image
 from .mpv_backend import MpvBackend
+from .music import Music
+from .music_view import MusicView
 from .view_transform import ViewTransform
 
 
@@ -33,6 +35,7 @@ class MediaViewport(QOpenGLWidget):
         self.video = False
         self.audio = False
         self.audio_name = ""
+        self.music_view = MusicView()
         self.initialized = False
         self.closed = False
         self.drag_position = None
@@ -61,6 +64,7 @@ class MediaViewport(QOpenGLWidget):
         backend.failed.connect(self.failed)
         backend.load_failed.connect(self._load_failed)
         backend.load_ready.connect(self._load_ready)
+        backend.music_ready.connect(self._music_ready)
         self.makeCurrent()
         try:
             # Keep this ctypes callback alive for the entire render context lifetime.
@@ -85,11 +89,28 @@ class MediaViewport(QOpenGLWidget):
     def _property(self, name, value):
         if self.closed:
             return
-        if name == "video-out-params" and value and self.video:
-            self.transform.media_width = value.get("dw", value.get("w", 1))
-            self.transform.media_height = value.get("dh", value.get("h", 1))
-            self.apply_transform()
+        if name == "video-out-params":
+            # Observer deliveries can lag behind a file switch. Re-read on the
+            # core worker and correlate the result with this load instead of
+            # applying dimensions carried by an earlier queued notification.
+            if self.video and self.backend:
+                self.backend.refresh_video(self.load_serial)
+            return
         self.video_changed.emit(name, value)
+        if name == "time-pos" and self.audio:
+            previous = self.music_view.music.lyrics.current(self.music_view.position)
+            self.music_view.position = value or 0
+            if previous != self.music_view.music.lyrics.current(self.music_view.position):
+                self.update()
+
+    @Slot(int, object)
+    def _music_ready(self, token, music):
+        if not self.closed and self.audio and token == self.load_serial:
+            position = self.music_view.position
+            self.music_view.set_music(music)
+            self.music_view.position = position
+            self.setAccessibleName(" · ".join(filter(None, (music.title, music.artist))))
+            self.update()
 
     @Slot(int, str)
     def _load_failed(self, token, message):
@@ -102,7 +123,14 @@ class MediaViewport(QOpenGLWidget):
         # same duration) after resetting controls, without reviving stale loads.
         if not self.closed and token == self.load_serial and self.playable:
             for name, value in values.items():
-                self._property(name, value)
+                if name == "video-out-params":
+                    if value and self.video:
+                        self.transform.media_width = value.get("dw", value.get("w", 1))
+                        self.transform.media_height = value.get("dh", value.get("h", 1))
+                        self.apply_transform()
+                    self.video_changed.emit(name, value)
+                else:
+                    self._property(name, value)
 
     def open_image(self, path):
         image = read_image(path)
@@ -115,8 +143,10 @@ class MediaViewport(QOpenGLWidget):
         self.transform.media_width, self.transform.media_height = image.width(), image.height()
         self.reset()
 
-    def open_video(self, path):
+    def open_video(self, path, *, playback_options=None):
         self.ensure_video()
+        for name, value in (playback_options or {}).items():
+            self.backend.set(name, value)
         self.load_serial += 1
         self.image = QImage()
         self.video = True
@@ -131,17 +161,21 @@ class MediaViewport(QOpenGLWidget):
     def playable(self):
         return self.video or self.audio
 
-    def open_audio(self, path):
+    def open_audio(self, path, *, playback_options=None):
         self.ensure_video()
+        for name, value in (playback_options or {}).items():
+            self.backend.set(name, value)
         self.load_serial += 1
         self.image = QImage()
         self.video, self.audio = False, True
         self.audio_name = path.name
+        self.music_view.set_music(Music(title=path.stem))
         self.reset()
-        # Ignore attached cover-art video streams; audio has a calm, explicit state.
+        # Decode embedded artwork as a bounded still image, never as video playback.
         self.backend.set("vid", "no")
         self.backend.set("pause", False)
         self.backend.load(path, self.load_serial)
+        self.backend.read_music(path, self.load_serial)
         self.update()
 
     def paintGL(self):
@@ -168,15 +202,7 @@ class MediaViewport(QOpenGLWidget):
 
         elif self.audio:
             painter = QPainter(self)
-            painter.setPen(Qt.GlobalColor.lightGray)
-            font = painter.font()
-            font.setPointSize(16)
-            painter.setFont(font)
-            painter.drawText(
-                self.rect().adjusted(24, 24, -24, -24),
-                Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap,
-                f"Music\n\n{self.audio_name}",
-            )
+            self.music_view.paint(painter, self.width(), self.height())
             painter.end()
 
         self.rendered_serial = self.load_serial
@@ -200,7 +226,10 @@ class MediaViewport(QOpenGLWidget):
 
     def wheelEvent(self, event):
         if self.audio:
-            event.ignore()
+            if self.music_view.show_lyrics and not self.music_view.music.lyrics.times:
+                self.music_view.scroll -= event.angleDelta().y() / 2
+                self.update()
+            event.accept()
             return
         self.transform.zoom_at(
             event.position().x(), event.position().y(), 1.2 ** (event.angleDelta().y() / 120)
@@ -209,6 +238,8 @@ class MediaViewport(QOpenGLWidget):
         event.accept()
 
     def mousePressEvent(self, event):
+        if self.audio:
+            return
         if event.button() == Qt.MouseButton.MiddleButton:
             self.reset()
         elif event.button() == Qt.MouseButton.LeftButton:
@@ -220,6 +251,22 @@ class MediaViewport(QOpenGLWidget):
             self.drag_position = event.position()
             self.transform.pan(delta.x(), delta.y())
             self.apply_transform()
+
+    def keyPressEvent(self, event):
+        if self.audio and event.key() in (Qt.Key.Key_PageDown, Qt.Key.Key_PageUp, Qt.Key.Key_Home):
+            if event.key() == Qt.Key.Key_Home:
+                self.music_view.scroll = 0
+            else:
+                direction = 1 if event.key() == Qt.Key.Key_PageDown else -1
+                self.music_view.scroll += direction * max(40, self.height() - 240)
+            self.update()
+            event.accept()
+        else:
+            super().keyPressEvent(event)
+
+    def toggle_lyrics(self, visible):
+        self.music_view.show_lyrics = visible
+        self.update()
 
     def mouseReleaseEvent(self, event):
         self.drag_position = None
