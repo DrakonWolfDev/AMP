@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2026 Andrew Hodgson trading as Wolf Forge.
+
 """Small application shell used while the renderer gate is under validation."""
 
 import argparse
@@ -11,6 +14,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QLabel,
     QMainWindow,
+    QMessageBox,
     QToolBar,
     QVBoxLayout,
     QWidget,
@@ -61,6 +65,7 @@ class Window(QMainWindow):
         toolbar = QToolBar("Media", self)
         toolbar.setMovable(False)
         self.addToolBar(toolbar)
+        self.menuBar().addMenu("Help").addAction("About AMP / licences", self.about)
         self.actions_by_name = {}
         for text, shortcut, callback in (
             ("Open file", "Ctrl+O", self.choose),
@@ -84,6 +89,20 @@ class Window(QMainWindow):
 
     def notify(self, message):
         self.statusBar().showMessage(message)
+
+    def about(self):
+        QMessageBox.about(
+            self,
+            "About AMP",
+            "AMP — Andy's Media Player\n\n"
+            "Copyright © 2026 Andrew Hodgson trading as Wolf Forge.\n\n"
+            "AMP is free software under the GNU Affero General Public License, "
+            "version 3 only (AGPL-3.0-only). You may use, modify and redistribute "
+            "it under that licence. AMP comes with no warranty.\n\n"
+            "See LICENSE for the full terms and THIRD_PARTY_NOTICES.md and "
+            "LICENSES for the separate dependency licences. Copies of those "
+            "files accompany the source and Python distribution.",
+        )
 
     def choose(self):
         path, _ = QFileDialog.getOpenFileName(self, "Open local media")

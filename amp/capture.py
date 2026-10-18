@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2026 Andrew Hodgson trading as Wolf Forge.
+
 """Save captures without ever overwriting an existing file."""
 
 from datetime import datetime

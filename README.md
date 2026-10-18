@@ -87,4 +87,4 @@ The renderer probe generates synthetic local fixtures and PNGs in ignored `artif
 
 The stack is Python, PySide6/Qt 6 Essentials, PyOpenGL for readback, and python-mpv wrapping libmpv's OpenGL Render API. All media operations are local. mpv user configuration/scripts, external-file autoloading and reference following are disabled; FFmpeg protocols are restricted to local files. No network feature, analytics, database or background scan is implemented. No diagnostics log or settings file is written by the application.
 
-No licence has been selected for AMP. Third-party runtime redistribution requires an audit of the exact binaries before packaging.
+AMP is licensed under the [GNU Affero General Public License, version 3 only](LICENSE) (`AGPL-3.0-only`), matching WolfLauncher. Copyright © 2026 Andrew Hodgson trading as Wolf Forge. Dependencies retain their own licences; see [third-party notices](THIRD_PARTY_NOTICES.md) and the [licensing policy](docs/LICENSING.md). The repository remains private; the binary/runtime redistribution audit is still required before a release.

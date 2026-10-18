@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2026 Andrew Hodgson trading as Wolf Forge.
+
 """Core commands run on one worker; Render API calls belong to the Qt GL thread."""
 
 import importlib

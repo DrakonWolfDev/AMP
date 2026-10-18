@@ -1,11 +1,14 @@
 [build-system]
-requires = ["setuptools>=75"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "andy-media-player"
 version = "0.0.1"
 description = "A local, private-by-design image and video viewer"
+license = "AGPL-3.0-only"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "LICENSES/*"]
+authors = [{name = "Andrew Hodgson trading as Wolf Forge"}]
 requires-python = ">=3.12"
 dependencies = ["PySide6-Essentials==6.12.0", "python-mpv==1.0.8", "PyOpenGL==3.1.10"]
 

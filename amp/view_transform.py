@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2026 Andrew Hodgson trading as Wolf Forge.
+
 """Logical-pixel fit/zoom/pan math shared by both renderers."""
 
 from dataclasses import dataclass

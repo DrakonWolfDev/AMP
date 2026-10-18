@@ -1,0 +1,3 @@
+# Preserve copied legal texts byte-for-byte, including upstream whitespace.
+LICENSE -text -whitespace
+LICENSES/** -text -whitespace
