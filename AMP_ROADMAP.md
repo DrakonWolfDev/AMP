@@ -94,6 +94,8 @@ Transport must keep volume/mute, duration, pause and seeking availability synchr
 **Gate:** In a paused and playing video, with off-centre zoom/pan and visible letterboxing, open the PNG and compare against the media region on screen. Its width/height match viewport physical pixels, not video source dimensions; controls are absent. Repeat at 125%/150% scaling if available.
 
 #### M7 — Quiet, useful UI
+
+Agreed small local settings screen: repeat-current-file toggle (separate from circular folder navigation), default volume, and loop-banner duration. Keep the defaults simple and controls uncluttered. Repeat remains off until explicitly enabled; no repeat setting is introduced before this milestone. Store these preferences locally and document the location.
 **Do:** Add polished but restrained hover/fade controls, compact transport bar, fullscreen, visible keyboard hints/help, useful drag/drop and failures. Ensure the controls don't disappear while hovered/focused/dragged and never interfere with panning. Don't make custom frameless chrome a prerequisite if it harms resizing/window management.
 
 **Gate:** The controls are obvious when needed and unobtrusive otherwise; they remain keyboard-accessible, responsive and reliable under Linux and Windows.

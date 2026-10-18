@@ -59,6 +59,8 @@ Video extensions accepted: MP4, MKV, WebM, MOV, AVI, M4V, MPG/MPEG, WMV, TS, MTS
 
 Screenshots read the last rendered media framebuffer without advancing video, exclude the controls/title bar, include visible bars/crop, and use physical viewport pixels. Existing files are never overwritten. If saving fails, the capture stays in memory and S retries it; closing the window discards this in-memory retry. Source media is never changed.
 
+During a media/viewport update, capture waits for a valid rendered frame by reporting that the view is updating; press S again in a moment. A capture that failed before readback does not claim to retain a frame. Partial disk writes are reported as failures, with partial files removed where possible. If a PNG save failed after capture, retry preserves that exact earlier frame even after you open another file.
+
 Music uses the same playback/seek/volume controls and a simple filename view. Screenshots and reset-fit are disabled in music mode. MP3, FLAC, WAV, Ogg/Vorbis, Opus, M4A/AAC, WMA and AIFF decoding were exercised with synthetic fixtures on the local runtime; codec support depends on the installed libmpv build. Playback stops at a track's end; use Left/Right to choose another file. Folder wrapping works in both directions, skips unreadable images, and does not restart a lone file. Tests ran at zero volume; audible output remains a manual listening check.
 
 At end of file the transport shows **Replay**; clicking it or pressing Space starts the same media from the beginning. Playback does not automatically repeat or advance. Short seeks and timeline seeks are clamped to the file's duration. Volume/mute widgets follow decoder changes, and seek controls are disabled when seeking is unavailable. Per-file state is refreshed even for consecutive files with identical durations.
@@ -82,6 +84,9 @@ Controls currently stay visible in fixed bars; hover/fade polish is pending. All
 .\.venv\Scripts\python -m tools.navigation_probe
 .\.venv\Scripts\python -m tools.image_probe
 .\.venv\Scripts\python -m tools.playback_probe
+.\.venv\Scripts\python -m tools.capture_probe
+# Optional: saves two verification PNGs into the real OS Pictures/AMP folder:
+.\.venv\Scripts\python -m tools.capture_probe --native-pictures
 ```
 
 The renderer probe generates synthetic local fixtures and PNGs in ignored `artifacts/probe`. Run it before the session probe. On this native 125% display, `QT_SCALE_FACTOR=0.8` and `1.2` exercise effective DPR 1 and 1.5; use `--output artifacts/probe-100` or `--output artifacts/probe-150` to retain separate reports. These environment overrides do not test changing OS display settings or moving between monitors. CI runs source checks and unit tests, not desktop renderer probes.

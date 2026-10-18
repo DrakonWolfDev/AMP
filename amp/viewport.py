@@ -38,6 +38,8 @@ class MediaViewport(QOpenGLWidget):
         self.drag_position = None
         self.render_count = 0
         self.load_serial = 0
+        self.rendered_serial = -1
+        self.rendered_size = None
         self.setMinimumSize(160, 100)
         # Keep the last composited framebuffer available for capture between frames.
         self.setUpdateBehavior(QOpenGLWidget.UpdateBehavior.PartialUpdate)
@@ -163,6 +165,7 @@ class MediaViewport(QOpenGLWidget):
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
             painter.drawImage(QRectF(*self.transform.rect), self.image)
             painter.end()
+
         elif self.audio:
             painter = QPainter(self)
             painter.setPen(Qt.GlobalColor.lightGray)
@@ -175,6 +178,9 @@ class MediaViewport(QOpenGLWidget):
                 f"Music\n\n{self.audio_name}",
             )
             painter.end()
+
+        self.rendered_serial = self.load_serial
+        self.rendered_size = (width, height)
 
     def resizeGL(self, width, height):
         self.transform.resize(self.width(), self.height())
@@ -231,6 +237,8 @@ class MediaViewport(QOpenGLWidget):
         # QSize uses Qt's rounding (half up), unlike Python's round (ties to even).
         physical = self.size() * self.devicePixelRatioF()
         expected = (physical.width(), physical.height())
+        if self.rendered_serial != self.load_serial or self.rendered_size != expected:
+            raise RuntimeError("The media view is updating. Try the screenshot again in a moment.")
         # grabFramebuffer() may call paintGL, advancing a playing video. Read the
         # existing Qt FBO instead: no decode/render command and no UI composition.
         width, height = expected
@@ -247,9 +255,12 @@ class MediaViewport(QOpenGLWidget):
             GL.glPixelStorei(GL.GL_PACK_ALIGNMENT, 1)
             pixels = ctypes.create_string_buffer(width * height * 4)
             GL.glReadPixels(0, 0, width, height, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, pixels)
-            return QImage(
+            image = QImage(
                 pixels.raw, width, height, width * 4, QImage.Format.Format_RGBA8888
             ).flipped(Qt.Orientation.Vertical)
+            if image.isNull():
+                raise RuntimeError("There is not enough memory to copy the viewport pixels.")
+            return image
         except GLError as error:
             raise RuntimeError(
                 "The viewport could not be read from the graphics device."

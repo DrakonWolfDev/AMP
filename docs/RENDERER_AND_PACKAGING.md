@@ -16,6 +16,8 @@ Image loading is isolated in image_backend.py. It keeps Qt's existing allocation
 
 This validates framebuffer composition, not a promise about exact operating-system compositor presentation latency. Multi-monitor/context recreation, other drivers and Linux remain open validation work. A destroyed context currently closes its viewport backend; automatic recovery after context loss is not implemented.
 
+M5/M6 track the media request and physical size last painted into the FBO and refuse capture if those no longer match. Disk writes reserve collision-safe names exclusively, detect short writes and attempt partial-file removal on failure. Failed saves retain the QImage for retry. Portrait/landscape known-pattern videos with explicit BT.709 conversion/tags provide composition-reference checks at DPR 1/1.25/1.5; no source-frame extraction is used as the actual capture. Dynamic video readback is separately tested; the pause comparison waits for decoder pause and a presented pause frame before comparing direct FBO bytes with Qt's repainting capture API.
+
 ## Local Windows runtime
 
 - Official repository: https://github.com/mpv-player/mpv

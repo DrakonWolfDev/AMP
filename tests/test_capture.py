@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 
 import pytest
 from PySide6.QtGui import QColor, QImage
@@ -40,3 +41,48 @@ def test_native_pictures_location_and_missing_location(monkeypatch, tmp_path):
     monkeypatch.setattr("amp.capture.QStandardPaths.writableLocation", lambda _kind: "")
     with pytest.raises(OSError, match="Pictures folder is unavailable"):
         pictures_directory()
+
+
+def test_partial_disk_write_is_reported_and_partial_png_removed(monkeypatch, tmp_path):
+    original_open = Path.open
+
+    class PartialWriter:
+        def __init__(self, path):
+            self.stream = original_open(path, "xb")
+
+        def __enter__(self):
+            return self
+
+        def write(self, data):
+            return self.stream.write(data[: len(data) // 2])
+
+        def __exit__(self, *_args):
+            self.stream.close()
+
+    def open_file(path, mode="r", *args, **kwargs):
+        return PartialWriter(path) if mode == "xb" else original_open(path, mode, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", open_file)
+    image = QImage(10, 10, QImage.Format.Format_RGB32)
+    image.fill(QColor("red"))
+    with pytest.raises(OSError, match="written completely"):
+        save_capture(image, tmp_path)
+    assert not list(tmp_path.glob("*.png"))
+
+
+def test_unwritable_output_is_reported_without_modifying_existing_files(monkeypatch, tmp_path):
+    original_open = Path.open
+    existing = tmp_path / "keep.txt"
+    existing.write_text("keep")
+
+    def denied(path, mode="r", *args, **kwargs):
+        if mode == "xb":
+            raise PermissionError("Permission denied")
+        return original_open(path, mode, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", denied)
+    image = QImage(10, 10, QImage.Format.Format_RGB32)
+    with pytest.raises(PermissionError):
+        save_capture(image, tmp_path)
+    assert existing.read_text() == "keep"
+    assert not list(tmp_path.glob("*.png"))

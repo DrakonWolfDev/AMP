@@ -220,7 +220,14 @@ class Window(QMainWindow):
             self.pending_capture = None
             self.notify(f"Saved {path.name} in Pictures/AMP")
         except (RuntimeError, OSError) as error:
-            self.notify(f"Screenshot failed: {error} · S retries the retained capture")
+            retry = (
+                "S retries the retained capture"
+                if self.pending_capture is not None
+                else "Try S again when the media view is ready"
+            )
+            self.notify(f"Screenshot failed: {error} · {retry}")
+        except MemoryError:
+            self.notify("Screenshot failed: not enough memory. Try a smaller window.")
 
     def new_window(self):
         window = Window()

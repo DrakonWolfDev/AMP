@@ -3,6 +3,7 @@
 
 """Save captures without ever overwriting an existing file."""
 
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 
@@ -38,9 +39,11 @@ def save_capture(image, directory=None, now=None):
             continue
         try:
             with output:
-                output.write(data)
+                if output.write(data) != len(data):
+                    raise OSError("The PNG could not be written completely.")
             return path
         except OSError:
-            path.unlink(missing_ok=True)
+            with suppress(OSError):
+                path.unlink(missing_ok=True)
             raise
     raise OSError("Too many captures have the same timestamp. Try again shortly.")

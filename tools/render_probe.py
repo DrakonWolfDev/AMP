@@ -13,6 +13,7 @@ from PySide6.QtCore import QTimer
 from PySide6.QtGui import QColor, QImage, QPainter
 
 from amp.app import Window, create_application
+from tools.playback_probe import snapshot
 
 
 def main():
@@ -101,13 +102,20 @@ def main():
         viewport.backend.set("pause", True)
 
     def seek_resize():
+        assert snapshot(window, "pause")["pause"], "Pause request has not reached the decoder"
+        # Present the settled pause frame before comparing two readback APIs;
+        # the earlier playing capture intentionally reads whatever was displayed.
+        viewport.repaint()
         capture("video-paused-zoom")
         # Paused FBO readback must match Qt's own framebuffer capture exactly.
         actual = viewport.capture().convertToFormat(QImage.Format.Format_RGBA8888)
         qt_capture = viewport.grabFramebuffer().convertToFormat(QImage.Format.Format_RGBA8888)
-        assert actual == qt_capture, (
-            f"Direct FBO capture {actual.size()} differs from Qt framebuffer {qt_capture.size()}"
-        )
+        if actual != qt_capture:
+            actual.save(str(output / "paused-direct.png"))
+            qt_capture.save(str(output / "paused-qt.png"))
+        assert actual.size() == qt_capture.size() and bytes(actual.constBits()) == bytes(
+            qt_capture.constBits()
+        ), f"Direct FBO capture {actual.size()} differs from Qt framebuffer {qt_capture.size()}"
         viewport.backend.command("seek", 5, "absolute")
         window.resize(900, 650)
 
