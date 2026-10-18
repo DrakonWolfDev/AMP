@@ -7,6 +7,7 @@ import importlib
 import os
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Lock
 
 from PySide6.QtCore import QObject, Signal
 
@@ -30,12 +31,15 @@ def load_binding():
 class MpvBackend(QObject):
     changed = Signal(str, object)
     failed = Signal(str)
+    load_failed = Signal(int, str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.binding = load_binding()
         self.worker = ThreadPoolExecutor(max_workers=1, thread_name_prefix="amp-mpv")
         self.closed = False
+        self._entry_tokens = {}
+        self._entry_lock = Lock()
         try:
             self.player = self.worker.submit(
                 lambda: self.binding.MPV(
@@ -80,7 +84,24 @@ class MpvBackend(QObject):
 
     def _ended(self, event):
         if not self.closed and event.data.reason == self.binding.MpvEventEndFile.ERROR:
-            self.failed.emit("This media could not be decoded. Try another local file.")
+            with self._entry_lock:
+                token = self._entry_tokens.pop(event.data.playlist_entry_id, None)
+            if token is not None and not self.closed:
+                self.load_failed.emit(token, "This media could not be decoded.")
+
+    def load(self, path, token):
+        def perform():
+            # loadfile returns before decoding finishes. Map the new playlist
+            # entry, not a mutable current filename, to the caller's request.
+            # The lock also covers errors arriving before the mapping is ready.
+            with self._entry_lock:
+                self.player.command("loadfile", str(path), "replace")
+                for entry in self.player._get_property("playlist"):
+                    self._entry_tokens[entry["id"]] = token
+                while len(self._entry_tokens) > 64:
+                    self._entry_tokens.pop(next(iter(self._entry_tokens)))
+
+        self.submit(perform)
 
     def submit(self, fn, *args):
         if self.closed:
@@ -92,7 +113,7 @@ class MpvBackend(QObject):
                 result.result()
             except (RuntimeError, OSError, ValueError, AttributeError):
                 if not self.closed:
-                    self.failed.emit("Video operation failed. Try reopening the file.")
+                    self.failed.emit("Media operation failed. Try reopening the file.")
 
         future.add_done_callback(completed)
 

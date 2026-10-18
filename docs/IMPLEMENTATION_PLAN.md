@@ -1,6 +1,6 @@
 # Implementation plan
 
-2026-10-18 scope amendment: add local music to M4 using the existing per-window backend/transport and a filename view. M2 folder navigation now wraps at both ends with a six-second amber notice (M7); this supersedes earlier no-wrap acceptance criteria. Include music formats in sorting/filtering and validate mode switching, single-file behaviour, skipped files across the boundary, independent state and cleanup (M8). No automatic next-track playback or playlist management is introduced.
+2026-10-18 scope amendment: add local music to M4 using the existing per-window backend/transport and a filename view. M2 folder navigation now wraps at both ends with a three-second amber notice (M7); this supersedes earlier no-wrap acceptance criteria. Include music formats in sorting/filtering and validate mode switching, single-file behaviour, skipped files across the boundary, independent state and cleanup (M8). No automatic next-track playback or playlist management is introduced.
 
 The root AMP_ROADMAP.md is the product specification. CODEX_PROMPT.md provides the engineering contract. Preserve both as supplied.
 
@@ -10,7 +10,7 @@ The root AMP_ROADMAP.md is the product specification. CODEX_PROMPT.md provides t
 | --- | --- | --- | --- |
 | M0 | Isolated Qt OpenGL viewport, image backend, libmpv Render API bridge, shared transform and framebuffer capture probe | Real playing/paused video, images, zoom/pan, resize, switching, shutdown, physical PNG dimensions at normal/high DPI | Render callback threading, GL ownership, capture timing and teardown |
 | M1 | Package/CLI, dependency diagnostics, empty window, pinned manifest, README, static checks and CI | Blank launch, path argument, actionable missing-runtime error, automated suite | Reproducible native dependencies |
-| M2 | Current-directory navigator, natural ordering, open dialog/drop/CLI | Mixed folder, clip2/clip10, deleted/corrupt files, boundaries without wrapping | Stable ordering and graceful decoder failures |
+| M2 | Current-directory navigator, natural ordering, open dialog/drop/CLI | Mixed folder, clip2/clip10, deleted/corrupt files, wrapping with a visible notice | Stable ordering and graceful decoder failures |
 | M3 | Qt image reader with EXIF transform and tested view-transform math | Portrait/ultrawide/large/rotated fixtures, cursor anchor, clamps, reset, resize | DPI and coordinate conversions |
 | M4 | Per-window mpv backend and transport controls | Actual MP4/H.264, MKV, WebM, silent video, pause/seek/volume/switching | Callback lifetime and lingering audio |
 | M5 | Adapt shared transform to documented mpv zoom/pan units | Playing/paused zoom, corner anchor, pan, seek, resize and reset | Different renderer coordinate conventions |

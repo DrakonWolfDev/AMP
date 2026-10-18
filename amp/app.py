@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
 from .capture import save_capture
 from .controls import VideoControls
 from .folder_navigator import AUDIO_SUFFIXES, IMAGE_SUFFIXES, VIDEO_SUFFIXES, navigation_steps
+from .navigation import NavigationAttempt
 from .viewport import MediaViewport
 
 
@@ -33,6 +34,7 @@ class Window(QMainWindow):
         self.resize(960, 640)
         self.current_path = None
         self.pending_capture = None
+        self.navigation_attempt = None
         self.setAcceptDrops(True)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.viewport = MediaViewport(self)
@@ -61,6 +63,7 @@ class Window(QMainWindow):
         layout.addWidget(self.controls)
         self.setCentralWidget(body)
         self.viewport.failed.connect(self.notify)
+        self.viewport.media_failed.connect(self.media_failed)
         self.viewport.fullscreen_requested.connect(self.toggle_fullscreen)
         toolbar = QToolBar("Media", self)
         toolbar.setMovable(False)
@@ -109,7 +112,9 @@ class Window(QMainWindow):
         if path:
             self.open_path(path)
 
-    def open_path(self, path):
+    def open_path(self, path, *, navigating=False):
+        if not navigating:
+            self.navigation_attempt = None
         try:
             path = Path(path).expanduser().resolve()
             if not path.is_file():
@@ -147,25 +152,42 @@ class Window(QMainWindow):
     def navigate(self, direction):
         if self.current_path is None:
             return
-        skipped = 0
         try:
-            for step in navigation_steps(self.current_path, direction):
-                if self.open_path(step.path):
-                    message = f"Skipped {skipped} unreadable file(s)." if skipped else ""
-                    if step.wrapped:
-                        boundary = "beginning" if direction > 0 else "end"
-                        clue = f"↻ Folder looped — back to the {boundary}"
-                        self.loop_notice.setText(clue)
-                        self.loop_notice.show()
-                        self.loop_timer.start(6000)
-                        message = f"{clue}. {message}".strip()
-                    if message:
-                        self.notify(message)
-                    return
-                skipped += 1
-            self.notify("No other readable supported files in this folder.")
+            self.navigation_attempt = NavigationAttempt(
+                list(navigation_steps(self.current_path, direction)), direction
+            )
+            self._continue_navigation()
         except OSError:
+            self.navigation_attempt = None
             self.notify("This folder is unavailable. Open another local file.")
+
+    def _continue_navigation(self):
+        attempt = self.navigation_attempt
+        while attempt is not None:
+            path = attempt.next()
+            if path is None:
+                self.navigation_attempt = None
+                self.notify("No other readable supported files in this folder.")
+                return
+            if self.open_path(path, navigating=True):
+                if attempt.wrapped:
+                    self.loop_notice.setText(attempt.message())
+                    self.loop_notice.show()
+                    self.loop_timer.start(3000)
+                if attempt.message():
+                    self.notify(attempt.message())
+                # Retain the remaining candidates for asynchronous decoder errors.
+                if not self.viewport.playable:
+                    self.navigation_attempt = None
+                return
+            attempt.skipped += 1
+
+    def media_failed(self, message):
+        if self.navigation_attempt is not None:
+            self.navigation_attempt.skipped += 1
+            self._continue_navigation()
+        else:
+            self.notify(f"{message} Use Left/Right or open another local file.")
 
     def video_set(self, name, value):
         if self.viewport.playable and self.viewport.backend:

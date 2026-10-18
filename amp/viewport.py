@@ -21,6 +21,7 @@ class MediaViewport(QOpenGLWidget):
     render_requested = Signal()
     fullscreen_requested = Signal()
     video_changed = Signal(str, object)
+    media_failed = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -35,6 +36,7 @@ class MediaViewport(QOpenGLWidget):
         self.closed = False
         self.drag_position = None
         self.render_count = 0
+        self.load_serial = 0
         self.setMinimumSize(160, 100)
         # Keep the last composited framebuffer available for capture between frames.
         self.setUpdateBehavior(QOpenGLWidget.UpdateBehavior.PartialUpdate)
@@ -54,6 +56,7 @@ class MediaViewport(QOpenGLWidget):
         backend = MpvBackend(self)
         backend.changed.connect(self._property)
         backend.failed.connect(self.failed)
+        backend.load_failed.connect(self._load_failed)
         self.makeCurrent()
         try:
             # Keep this ctypes callback alive for the entire render context lifetime.
@@ -84,12 +87,18 @@ class MediaViewport(QOpenGLWidget):
             self.apply_transform()
         self.video_changed.emit(name, value)
 
+    @Slot(int, str)
+    def _load_failed(self, token, message):
+        if not self.closed and token == self.load_serial and self.playable:
+            self.media_failed.emit(message)
+
     def open_image(self, path):
         reader = QImageReader(str(path))
         reader.setAutoTransform(True)
         image = reader.read()
         if image.isNull():
             raise RuntimeError("This image could not be read. It may be damaged or unsupported.")
+        self.load_serial += 1
         if self.backend:
             self.backend.command("stop")
         self.video = False
@@ -100,6 +109,7 @@ class MediaViewport(QOpenGLWidget):
 
     def open_video(self, path):
         self.ensure_video()
+        self.load_serial += 1
         self.image = QImage()
         self.video = True
         self.audio = False
@@ -107,7 +117,7 @@ class MediaViewport(QOpenGLWidget):
         self.transform.media_width, self.transform.media_height = 1, 1
         self.reset()
         self.backend.set("pause", False)
-        self.backend.command("loadfile", str(path), "replace")
+        self.backend.load(path, self.load_serial)
 
     @property
     def playable(self):
@@ -115,6 +125,7 @@ class MediaViewport(QOpenGLWidget):
 
     def open_audio(self, path):
         self.ensure_video()
+        self.load_serial += 1
         self.image = QImage()
         self.video, self.audio = False, True
         self.audio_name = path.name
@@ -122,7 +133,7 @@ class MediaViewport(QOpenGLWidget):
         # Ignore attached cover-art video streams; audio has a calm, explicit state.
         self.backend.set("vid", "no")
         self.backend.set("pause", False)
-        self.backend.command("loadfile", str(path), "replace")
+        self.backend.load(path, self.load_serial)
         self.update()
 
     def paintGL(self):

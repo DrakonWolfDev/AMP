@@ -11,6 +11,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install Linux Qt runtime libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libopengl0 libgl1
       - run: python -m pip install -e ".[dev]"
       - run: python -m ruff check amp tools tests
       - run: python -m ruff format --check amp tools tests

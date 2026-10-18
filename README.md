@@ -27,7 +27,7 @@ Images can open without libmpv; opening video without the runtime shows installa
 
 ## Linux development setup (not yet exercised)
 
-On Mint 22.3, install Python 3.12 with venv support, `libmpv2`, and the OS Qt/OpenGL runtime dependencies. Then:
+On Mint 22.3, install Python 3.12 with venv support, `libmpv2`, and Qt/OpenGL runtime dependencies (`libegl1`, `libopengl0`, `libgl1`). The Ubuntu CI runner needed these libraries before Qt image tests could import. Then:
 
 ```sh
 python3 -m venv .venv
@@ -43,7 +43,7 @@ Linux/Wayland and clean-machine installation are not yet validated. Qt's xcb plu
 | Input | Action |
 | --- | --- |
 | Ctrl+O / drag local file into window | Open |
-| Left / Right | Previous / next supported image, video or music file; wraps with a six-second amber notice |
+| Left / Right | Previous / next supported image, video or music file; wraps with a three-second amber notice |
 | Wheel / left drag | Zoom towards pointer / pan |
 | R / middle click | Reset fit |
 | Space | Play / pause video or music |
@@ -61,7 +61,7 @@ Music uses the same playback/seek/volume controls and a simple filename view. Sc
 
 Runnable early Windows preview. Real GL probes passed with image and H.264 video capture, transforms, seek/resize/switch/shutdown at 100%, native 125%, and 150% effective Qt scaling. A second integration probe exercised playback controls, natural folder navigation, H.264 MP4/MKV, VP9 WebM, and two independent video windows. See [recorded results](docs/TEST_MATRIX.md).
 
-Controls currently stay visible in fixed bars; hover/fade polish is pending. EXIF orientation is enabled but rotated-JPEG fixtures, large images, sound output, audio cleanup, OS file associations and multi-monitor DPI transitions still need validation. Corrupt images are skipped during navigation; corrupt videos report an error and allow manual navigation onward. Settings are not persisted. Hardware decoding is deliberately disabled in this first probe. There is no installer or release package yet.
+Controls currently stay visible in fixed bars; hover/fade polish is pending. EXIF orientation is enabled but rotated-JPEG fixtures, large images, sound output, audio cleanup, OS file associations and multi-monitor DPI transitions still need validation. Navigation skips corrupt images, videos and music in the chosen direction and stops after trying each candidate once if none is readable. Opening a corrupt file directly reports an error and leaves manual navigation available. Settings are not persisted. Hardware decoding is deliberately disabled in this first probe. There is no installer or release package yet.
 
 ## Checks
 
@@ -72,6 +72,8 @@ Controls currently stay visible in fixed bars; hover/fade polish is pending. EXI
 # Requires a visible Windows desktop and AMP_MPV_DIR, plus dev dependencies:
 .\.venv\Scripts\python -m tools.render_probe
 .\.venv\Scripts\python -m tools.session_probe
+.\.venv\Scripts\python -m tools.music_probe
+.\.venv\Scripts\python -m tools.navigation_probe
 ```
 
 The renderer probe generates synthetic local fixtures and PNGs in ignored `artifacts/probe`. Run it before the session probe. On this native 125% display, `QT_SCALE_FACTOR=0.8` and `1.2` exercise effective DPR 1 and 1.5; use `--output artifacts/probe-100` or `--output artifacts/probe-150` to retain separate reports. These environment overrides do not test changing OS display settings or moving between monitors. CI runs source checks and unit tests, not desktop renderer probes.
