@@ -8,9 +8,10 @@ import ctypes
 from OpenGL import GL
 from OpenGL.error import GLError
 from PySide6.QtCore import QRectF, Qt, Signal, Slot
-from PySide6.QtGui import QImage, QImageReader, QPainter
+from PySide6.QtGui import QImage, QPainter
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
+from .image_backend import read_image
 from .mpv_backend import MpvBackend
 from .view_transform import ViewTransform
 
@@ -93,11 +94,7 @@ class MediaViewport(QOpenGLWidget):
             self.media_failed.emit(message)
 
     def open_image(self, path):
-        reader = QImageReader(str(path))
-        reader.setAutoTransform(True)
-        image = reader.read()
-        if image.isNull():
-            raise RuntimeError("This image could not be read. It may be damaged or unsupported.")
+        image = read_image(path)
         self.load_serial += 1
         if self.backend:
             self.backend.command("stop")

@@ -70,6 +70,8 @@ The mouse cursor and OS window borders are not part of the saved media screensho
 **Gate:** A mixed folder containing `clip2.mp4`, `clip10.mp4`, still images and unrelated documents navigates in the expected order without recursion or surprise playlist/library behaviour.
 
 #### M3 — Still-image viewer
+
+The still-image scope includes PNG, JPEG/JFIF, BMP, WebP, TIFF/TIF (first page), and GIF (first frame). Test all eight EXIF rotation/mirror cases, transparency, 24-megapixel loading, bounded decoder allocation errors, and cursor anchoring while an axis remains letterboxed. Resize under zoom should preserve the media detail at the viewport centre where pan bounds allow. Animated playback and multipage document browsing remain outside this milestone.
 **Do:** Fit-to-window, resize re-fit behaviour, correct orientation, smooth zoom at cursor, drag-pan, reset, fullscreen and image errors. Keep transform math in a separately unit-testable module.
 
 **Gate:** Portrait, landscape, huge and oddly shaped images preserve proportions; zoom does not jump away from the pointed detail; resetting restores fit exactly.

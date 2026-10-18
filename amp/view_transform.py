@@ -33,13 +33,13 @@ class ViewTransform:
 
     def clamp(self):
         _, _, w, h = self.rect
-        # Keep the viewport covered along enlarged axes and centre smaller axes.
-        self.pan_x = max(
-            -max(0, (w - self.width) / 2), min(max(0, (w - self.width) / 2), self.pan_x)
-        )
-        self.pan_y = max(
-            -max(0, (h - self.height) / 2), min(max(0, (h - self.height) / 2), self.pan_y)
-        )
+        # Smaller zoomed axes may move within their letterbox space so the
+        # pointed detail stays anchored. Larger axes must cover the viewport.
+        # At initial fit, always return to the exact centred composition.
+        limit_x = abs(w - self.width) / 2 if self.zoom > 1 else 0
+        limit_y = abs(h - self.height) / 2 if self.zoom > 1 else 0
+        self.pan_x = max(-limit_x, min(limit_x, self.pan_x))
+        self.pan_y = max(-limit_y, min(limit_y, self.pan_y))
 
     def zoom_at(self, x, y, factor):
         previous = self.zoom
@@ -55,7 +55,12 @@ class ViewTransform:
         self.clamp()
 
     def resize(self, width, height):
+        old_width, old_height = self.fitted_size
         self.width, self.height = max(1, width), max(1, height)
+        new_width, new_height = self.fitted_size
+        # Keep the media point at the viewport centre stable while retaining zoom.
+        self.pan_x *= new_width / old_width
+        self.pan_y *= new_height / old_height
         self.clamp()
 
     @property

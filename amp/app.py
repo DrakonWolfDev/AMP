@@ -108,7 +108,14 @@ class Window(QMainWindow):
         )
 
     def choose(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Open local media")
+        suffixes = sorted(IMAGE_SUFFIXES | VIDEO_SUFFIXES | AUDIO_SUFFIXES)
+        patterns = " ".join(f"*{suffix}" for suffix in suffixes)
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Open local media",
+            str(self.current_path.parent) if self.current_path else "",
+            f"Supported media ({patterns});;All files (*)",
+        )
         if path:
             self.open_path(path)
 
@@ -144,6 +151,8 @@ class Window(QMainWindow):
                 if self.viewport.audio
                 else "Wheel zoom · drag pan · R reset"
             )
+            if path.suffix.lower() in {".gif", ".tif", ".tiff"}:
+                self.notify("Showing the first frame/page · wheel zoom · drag pan · R reset")
             return True
         except (RuntimeError, OSError, ValueError) as error:
             self.notify(str(error))

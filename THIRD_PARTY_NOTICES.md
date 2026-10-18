@@ -39,6 +39,8 @@ AMP's own code is Copyright © 2026 Andrew Hodgson trading as Wolf Forge, licens
 
 ## Python and development tools
 
+Pillow 13.0.0 is used only to generate synthetic image/EXIF test fixtures, not to decode images in AMP. Its installed metadata identifies MIT-CMU; the complete installed licence is preserved at LICENSES/Pillow-13.0.0.txt. Source: https://github.com/python-pillow/Pillow. Preserve its notices if distributing the development environment.
+
 The current source installation uses the user's Python interpreter. A future installer embedding CPython must include its PSF licence and bundled third-party notices. pytest, Ruff, setuptools and imageio-ffmpeg are development/build dependencies, not application playback dependencies. Their source/wheel licence files must remain intact when distributed. The development FFmpeg fixture generator is not a licence-cleared AMP media runtime and must not accidentally enter a release bundle.
 
 ## Scope and provenance
