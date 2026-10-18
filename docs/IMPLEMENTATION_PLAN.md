@@ -1,0 +1,22 @@
+# Implementation plan
+
+The root AMP_ROADMAP.md is the product specification. CODEX_PROMPT.md provides the engineering contract. Preserve both as supplied.
+
+## Sequence and acceptance
+
+| Stage | Planned code/work | Verification | Principal risk |
+| --- | --- | --- | --- |
+| M0 | Isolated Qt OpenGL viewport, image backend, libmpv Render API bridge, shared transform and framebuffer capture probe | Real playing/paused video, images, zoom/pan, resize, switching, shutdown, physical PNG dimensions at normal/high DPI | Render callback threading, GL ownership, capture timing and teardown |
+| M1 | Package/CLI, dependency diagnostics, empty window, pinned manifest, README, static checks and CI | Blank launch, path argument, actionable missing-runtime error, automated suite | Reproducible native dependencies |
+| M2 | Current-directory navigator, natural ordering, open dialog/drop/CLI | Mixed folder, clip2/clip10, deleted/corrupt files, boundaries without wrapping | Stable ordering and graceful decoder failures |
+| M3 | Qt image reader with EXIF transform and tested view-transform math | Portrait/ultrawide/large/rotated fixtures, cursor anchor, clamps, reset, resize | DPI and coordinate conversions |
+| M4 | Per-window mpv backend and transport controls | Actual MP4/H.264, MKV, WebM, silent video, pause/seek/volume/switching | Callback lifetime and lingering audio |
+| M5 | Adapt shared transform to documented mpv zoom/pan units | Playing/paused zoom, corner anchor, pan, seek, resize and reset | Different renderer coordinate conventions |
+| M6 | Media-only framebuffer capture, Pictures resolution, collision-safe save and feedback | Compare visible crop/bars/frame with PNG; physical dimensions; save errors | Playback timing and high DPI |
+| M7 | Slim controls, interaction-aware hiding, shortcuts/fullscreen/help | Keyboard routing, focus/hover/menu/slider behaviour, images hide transport | Controls interfering with pan or capture |
+| M8 | Window ownership and independent backend lifecycle | Two active videos, folders, transforms, volumes, screenshots, independent close | Shared state and GL teardown |
+| M9 | Repeatable packaging, exact dependency/licence inventory, notices and handover | Clean installs and full matrix on Mint 22.3 and Windows | Native library/codec redistribution and untested platforms |
+
+M0 is mandatory before implementing the dependent UI. Check the binding against current upstream API documentation and selected versions before writing integration code. If M0 fails, record the evidence and smallest alternatives in TECHNICAL_RISKS.md; only continue independent work.
+
+Use small reviewable commits. Automated tests should cover transforms, folder filtering/ordering, capture paths/names/errors, keyboard routing and session isolation where meaningful. Platform/rendering claims require execution evidence. Publishing the private source repository does not authorize a release, tag, installer publication or deployment.
