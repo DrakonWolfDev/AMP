@@ -42,13 +42,15 @@ Linux/Wayland and clean-machine installation are not yet validated. Qt's xcb plu
 
 Images: PNG, JPEG/JPG/JFIF, BMP, WebP, GIF (first frame), and TIFF/TIF (first page). EXIF rotations/mirroring are applied automatically. Very large images exceeding Qt's decoded-image allocation limit produce a size/limit message; the original file is never reduced or modified. HEIC/AVIF support and animated-image playback remain future work.
 
+Video extensions accepted: MP4, MKV, WebM, MOV, AVI, M4V, MPG/MPEG, WMV, TS, MTS and M2TS. Tested samples include H.264/AAC MP4 and transport streams, H.264 MKV, silent MKV, VP9 WebM and WMV2/WMA WMV. Extensions identify containers, not a guarantee that every codec/profile inside them will decode on every runtime.
+
 | Input | Action |
 | --- | --- |
 | Ctrl+O / drag local file into window | Open |
 | Left / Right | Previous / next supported image, video or music file; wraps with a three-second amber notice |
 | Wheel / left drag | Zoom towards pointer / pan |
 | R / middle click | Reset fit |
-| Space | Play / pause video or music |
+| Space | Play / pause video or music; Replay from the end |
 | Transport bar | Seek ±5 seconds, timeline, volume, mute |
 | S / Screenshot button | Save media viewport to OS Pictures/AMP |
 | F / F11 / media double click | Toggle fullscreen |
@@ -59,11 +61,13 @@ Screenshots read the last rendered media framebuffer without advancing video, ex
 
 Music uses the same playback/seek/volume controls and a simple filename view. Screenshots and reset-fit are disabled in music mode. MP3, FLAC, WAV, Ogg/Vorbis, Opus, M4A/AAC, WMA and AIFF decoding were exercised with synthetic fixtures on the local runtime; codec support depends on the installed libmpv build. Playback stops at a track's end; use Left/Right to choose another file. Folder wrapping works in both directions, skips unreadable images, and does not restart a lone file. Tests ran at zero volume; audible output remains a manual listening check.
 
+At end of file the transport shows **Replay**; clicking it or pressing Space starts the same media from the beginning. Playback does not automatically repeat or advance. Short seeks and timeline seeks are clamped to the file's duration. Volume/mute widgets follow decoder changes, and seek controls are disabled when seeking is unavailable. Per-file state is refreshed even for consecutive files with identical durations.
+
 ## Preview status and limitations
 
 Runnable early Windows preview. Real GL probes passed with image and H.264 video capture, transforms, seek/resize/switch/shutdown at 100%, native 125%, and 150% effective Qt scaling. A second integration probe exercised playback controls, natural folder navigation, H.264 MP4/MKV, VP9 WebM, and two independent video windows. See [recorded results](docs/TEST_MATRIX.md).
 
-Controls currently stay visible in fixed bars; hover/fade polish is pending. All eight EXIF orientation cases, portrait/ultrawide images, a 6000×4000 PNG, transparency, mouse/keyboard controls and physical-pixel image capture passed Windows probes at 125% and 150% effective scaling. Sound output, audio cleanup, OS file associations and multi-monitor DPI transitions still need validation. Navigation skips corrupt images, videos and music in the chosen direction and stops after trying each candidate once if none is readable. Opening a corrupt file directly reports an error and leaves manual navigation available. Settings are not persisted. Hardware decoding is deliberately disabled in this first probe. There is no installer or release package yet.
+Controls currently stay visible in fixed bars; hover/fade polish is pending. All eight EXIF orientation cases, portrait/ultrawide images, a 6000×4000 PNG, transparency, mouse/keyboard controls and physical-pixel image capture passed Windows probes at 125% and 150% effective scaling. Windows WASAPI audio-output creation/release, image/silent-video switching, EOF/replay and independent audio-window shutdown passed zero-volume checks; audible sound quality/latency still needs a listening check. OS file associations and multi-monitor DPI transitions remain untested. Navigation skips corrupt images, videos and music in the chosen direction and stops after trying each candidate once if none is readable. Opening a corrupt file directly reports an error and leaves manual navigation available. Settings are not persisted. Hardware decoding is deliberately disabled in this first probe. There is no installer or release package yet.
 
 ## Checks
 
@@ -77,6 +81,7 @@ Controls currently stay visible in fixed bars; hover/fade polish is pending. All
 .\.venv\Scripts\python -m tools.music_probe
 .\.venv\Scripts\python -m tools.navigation_probe
 .\.venv\Scripts\python -m tools.image_probe
+.\.venv\Scripts\python -m tools.playback_probe
 ```
 
 The renderer probe generates synthetic local fixtures and PNGs in ignored `artifacts/probe`. Run it before the session probe. On this native 125% display, `QT_SCALE_FACTOR=0.8` and `1.2` exercise effective DPR 1 and 1.5; use `--output artifacts/probe-100` or `--output artifacts/probe-150` to retain separate reports. These environment overrides do not test changing OS display settings or moving between monitors. CI runs source checks and unit tests, not desktop renderer probes.

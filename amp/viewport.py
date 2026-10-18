@@ -58,6 +58,7 @@ class MediaViewport(QOpenGLWidget):
         backend.changed.connect(self._property)
         backend.failed.connect(self.failed)
         backend.load_failed.connect(self._load_failed)
+        backend.load_ready.connect(self._load_ready)
         self.makeCurrent()
         try:
             # Keep this ctypes callback alive for the entire render context lifetime.
@@ -92,6 +93,14 @@ class MediaViewport(QOpenGLWidget):
     def _load_failed(self, token, message):
         if not self.closed and token == self.load_serial and self.playable:
             self.media_failed.emit(message)
+
+    @Slot(int, object)
+    def _load_ready(self, token, values):
+        # Refresh even unchanged properties (e.g. consecutive files with the
+        # same duration) after resetting controls, without reviving stale loads.
+        if not self.closed and token == self.load_serial and self.playable:
+            for name, value in values.items():
+                self._property(name, value)
 
     def open_image(self, path):
         image = read_image(path)

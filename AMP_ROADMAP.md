@@ -77,6 +77,8 @@ The still-image scope includes PNG, JPEG/JFIF, BMP, WebP, TIFF/TIF (first page),
 **Gate:** Portrait, landscape, huge and oddly shaped images preserve proportions; zoom does not jump away from the pointed detail; resetting restores fit exactly.
 
 #### M4 — Video and music playback
+
+Transport must keep volume/mute, duration, pause and seeking availability synchronised with the backend. Refresh per-file state even when consecutive media have identical property values. Clamp seeks to media bounds. On natural EOF, stop and show Replay; Play/Space restarts the same file without automatic repeat/advance. Check AAC-bearing video, silent video and music; confirm output release on image/silent switches and independent shutdown. WMV and TS/MTS/M2TS join the accepted extensions, with actual codec coverage documented for the chosen runtime.
 **Do:** Wire one mpv core/render context per AMP window; immediate local playback, pause, seek, timeline, audio volume/mute, end-of-file behaviour and clean media switching. Avoid libmpv operations inside forbidden render callbacks; schedule UI-thread work safely.
 
 **Gate:** MP4/H.264, MKV, WebM and the agreed local music formats play as supported by the selected libmpv build. Time/seek/volume updates work; music/image/video mode switches restore appropriate controls and do not leave audio playing in the background.

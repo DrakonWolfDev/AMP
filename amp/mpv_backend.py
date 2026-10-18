@@ -11,6 +11,8 @@ from threading import Lock
 
 from PySide6.QtCore import QObject, Signal
 
+from .playback import seek_target
+
 
 def load_binding():
     if os.name == "nt":
@@ -32,6 +34,18 @@ class MpvBackend(QObject):
     changed = Signal(str, object)
     failed = Signal(str)
     load_failed = Signal(int, str)
+    load_ready = Signal(int, object)
+    observed_properties = (
+        "time-pos",
+        "duration",
+        "pause",
+        "volume",
+        "mute",
+        "video-out-params",
+        "idle-active",
+        "eof-reached",
+        "seekable",
+    )
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -40,6 +54,7 @@ class MpvBackend(QObject):
         self.closed = False
         self._entry_tokens = {}
         self._entry_lock = Lock()
+        self._active_entry = None
         try:
             self.player = self.worker.submit(
                 lambda: self.binding.MPV(
@@ -52,6 +67,7 @@ class MpvBackend(QObject):
                     terminal=False,
                     idle=True,
                     keep_open=True,
+                    gapless_audio="no",
                     ytdl=False,
                     load_scripts=False,
                     access_references=False,
@@ -61,17 +77,11 @@ class MpvBackend(QObject):
                 )
             ).result()
             self.version = self.worker.submit(self.player._get_property, "mpv-version").result()
-            for name in (
-                "time-pos",
-                "duration",
-                "pause",
-                "volume",
-                "mute",
-                "video-out-params",
-                "idle-active",
-            ):
+            for name in self.observed_properties:
                 self.worker.submit(self.player.observe_property, name, self._observed).result()
             self.player.event_callback("end-file")(self._ended)
+            self.player.event_callback("start-file")(self._started)
+            self.player.event_callback("file-loaded")(self._loaded)
         except Exception:
             if hasattr(self, "player"):
                 self.worker.submit(self.player.terminate).result(timeout=15)
@@ -81,6 +91,27 @@ class MpvBackend(QObject):
     def _observed(self, name, value):
         if not self.closed:
             self.changed.emit(name, value)
+
+    def _started(self, event):
+        self._active_entry = event.data.playlist_entry_id
+
+    def _loaded(self, _event):
+        with self._entry_lock:
+            token = self._entry_tokens.get(self._active_entry)
+        if token is None or self.closed:
+            return
+
+        def refresh():
+            values = {}
+            for name in self.observed_properties:
+                try:
+                    values[name] = self.player._get_property(name)
+                except AttributeError:
+                    values[name] = None
+            if not self.closed:
+                self.load_ready.emit(token, values)
+
+        self.submit(refresh)
 
     def _ended(self, event):
         if not self.closed and event.data.reason == self.binding.MpvEventEndFile.ERROR:
@@ -106,12 +137,14 @@ class MpvBackend(QObject):
     def submit(self, fn, *args):
         if self.closed:
             return
-        future = self.worker.submit(fn, *args)
+        # Already queued slider/seek/load commands become no-ops on shutdown,
+        # so a busy UI cannot keep audio alive behind a long command backlog.
+        future = self.worker.submit(lambda: fn(*args) if not self.closed else None)
 
         def completed(result):
             try:
                 result.result()
-            except (RuntimeError, OSError, ValueError, AttributeError):
+            except (RuntimeError, OSError, ValueError, AttributeError, TypeError, SystemError):
                 if not self.closed:
                     self.failed.emit("Media operation failed. Try reopening the file.")
 
@@ -119,6 +152,31 @@ class MpvBackend(QObject):
 
     def command(self, *args):
         self.submit(self.player.command, *args)
+
+    def toggle_playback(self):
+        def perform():
+            if self.player._get_property("eof-reached"):
+                self.player.command("seek", 0, "absolute+exact")
+                self.player._set_property("pause", False)
+            else:
+                self.player.command("cycle", "pause")
+
+        self.submit(perform)
+
+    def seek(self, seconds, mode):
+        def perform():
+            if not self.player._get_property("seekable"):
+                return
+            target = seek_target(
+                seconds,
+                mode,
+                self.player._get_property("time-pos"),
+                self.player._get_property("duration"),
+            )
+            if target is not None:
+                self.player.command("seek", target, "absolute+exact")
+
+        self.submit(perform)
 
     def set(self, name, value):
         self.submit(self.player._set_property, name, value)

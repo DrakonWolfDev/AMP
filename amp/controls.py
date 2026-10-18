@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (C) 2026 Andrew Hodgson trading as Wolf Forge.
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QSignalBlocker, Qt, Signal
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSlider, QWidget
 
 
@@ -22,6 +22,10 @@ class VideoControls(QWidget):
         super().__init__(parent)
         self.duration = 0
         self.position = 0
+        self.paused = False
+        self.ended = False
+        self.seekable = True
+        self.seek_buttons = []
         layout = QHBoxLayout(self)
         layout.setContentsMargins(8, 4, 8, 4)
         self.play = QPushButton("Pause")
@@ -33,6 +37,7 @@ class VideoControls(QWidget):
                 lambda _checked=False, delta=seconds: self.seek_requested.emit(delta, "relative")
             )
             layout.addWidget(button)
+            self.seek_buttons.append(button)
         self.time = QLabel("0:00 / 0:00")
         layout.addWidget(self.time)
         self.timeline = QSlider(Qt.Orientation.Horizontal)
@@ -68,9 +73,22 @@ class VideoControls(QWidget):
         elif name == "time-pos":
             self.position = value or 0
         elif name == "pause":
-            self.play.setText("Play" if value else "Pause")
+            self.paused = bool(value)
+        elif name == "eof-reached":
+            self.ended = bool(value)
+        elif name == "seekable":
+            self.seekable = bool(value)
+        elif name == "volume" and value is not None:
+            with QSignalBlocker(self.volume):
+                self.volume.setValue(round(value))
+        elif name == "mute" and value is not None:
+            with QSignalBlocker(self.mute):
+                self.mute.setChecked(bool(value))
+        self.play.setText("Replay" if self.ended else "Play" if self.paused else "Pause")
         self.time.setText(f"{time_label(self.position)} / {time_label(self.duration)}")
-        self.timeline.setEnabled(self.duration > 0)
+        self.timeline.setEnabled(self.duration > 0 and self.seekable)
+        for button in self.seek_buttons:
+            button.setEnabled(self.duration > 0 and self.seekable)
         if not self.timeline.isSliderDown():
             self.timeline.setValue(
                 round(self.position / self.duration * 10000) if self.duration else 0

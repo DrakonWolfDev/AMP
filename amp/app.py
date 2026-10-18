@@ -143,6 +143,8 @@ class Window(QMainWindow):
             self.actions_by_name["Reset fit"].setEnabled(not self.viewport.audio)
             self.controls.update_property("duration", 0)
             self.controls.update_property("time-pos", 0)
+            self.controls.update_property("eof-reached", False)
+            self.controls.update_property("pause", False)
             if self.viewport.playable:
                 self.video_set("volume", self.controls.volume.value())
                 self.video_set("mute", self.controls.mute.isChecked())
@@ -204,11 +206,11 @@ class Window(QMainWindow):
 
     def pause(self):
         if self.viewport.playable and self.viewport.backend:
-            self.viewport.backend.command("cycle", "pause")
+            self.viewport.backend.toggle_playback()
 
     def seek(self, seconds, mode):
         if self.viewport.playable and self.viewport.backend:
-            self.viewport.backend.command("seek", seconds, mode)
+            self.viewport.backend.seek(seconds, mode)
 
     def screenshot(self):
         try:
