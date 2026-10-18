@@ -26,6 +26,8 @@ class MediaViewport(QOpenGLWidget):
         self.backend = None
         self.renderer = None
         self.video = False
+        self.audio = False
+        self.audio_name = ""
         self.initialized = False
         self.closed = False
         self.drag_position = None
@@ -88,6 +90,7 @@ class MediaViewport(QOpenGLWidget):
         if self.backend:
             self.backend.command("stop")
         self.video = False
+        self.audio = False
         self.image = image
         self.transform.media_width, self.transform.media_height = image.width(), image.height()
         self.reset()
@@ -96,10 +99,28 @@ class MediaViewport(QOpenGLWidget):
         self.ensure_video()
         self.image = QImage()
         self.video = True
+        self.audio = False
+        self.backend.set("vid", "auto")
         self.transform.media_width, self.transform.media_height = 1, 1
         self.reset()
         self.backend.set("pause", False)
         self.backend.command("loadfile", str(path), "replace")
+
+    @property
+    def playable(self):
+        return self.video or self.audio
+
+    def open_audio(self, path):
+        self.ensure_video()
+        self.image = QImage()
+        self.video, self.audio = False, True
+        self.audio_name = path.name
+        self.reset()
+        # Ignore attached cover-art video streams; audio has a calm, explicit state.
+        self.backend.set("vid", "no")
+        self.backend.set("pause", False)
+        self.backend.command("loadfile", str(path), "replace")
+        self.update()
 
     def paintGL(self):
         if self.closed:
@@ -122,6 +143,18 @@ class MediaViewport(QOpenGLWidget):
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
             painter.drawImage(QRectF(*self.transform.rect), self.image)
             painter.end()
+        elif self.audio:
+            painter = QPainter(self)
+            painter.setPen(Qt.GlobalColor.lightGray)
+            font = painter.font()
+            font.setPointSize(16)
+            painter.setFont(font)
+            painter.drawText(
+                self.rect().adjusted(24, 24, -24, -24),
+                Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap,
+                f"Music\n\n{self.audio_name}",
+            )
+            painter.end()
 
     def resizeGL(self, width, height):
         self.transform.resize(self.width(), self.height())
@@ -140,6 +173,9 @@ class MediaViewport(QOpenGLWidget):
         self.apply_transform()
 
     def wheelEvent(self, event):
+        if self.audio:
+            event.ignore()
+            return
         self.transform.zoom_at(
             event.position().x(), event.position().y(), 1.2 ** (event.angleDelta().y() / 120)
         )
@@ -166,6 +202,8 @@ class MediaViewport(QOpenGLWidget):
         self.fullscreen_requested.emit()
 
     def capture(self):
+        if self.audio:
+            raise RuntimeError("Screenshots are available for images and videos, not music.")
         if self.closed or not self.isValid():
             raise RuntimeError("The graphics viewport is unavailable. Open a new AMP window.")
         if self.image.isNull() and not self.video:

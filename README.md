@@ -1,6 +1,6 @@
 # AMP — Andy’s Media Player
 
-A small, private-by-design desktop viewer for local images and videos on Linux Mint and Windows.
+A small, private-by-design desktop player for local images, videos and music on Linux Mint and Windows.
 
 AMP will fit media to the viewport, offer cursor-focused zoom and drag-pan, browse neighbouring files, and save the visible media viewport as a PNG. Video playback and each window's state remain independent. No accounts, telemetry, cloud services, or media library scans.
 
@@ -43,10 +43,10 @@ Linux/Wayland and clean-machine installation are not yet validated. Qt's xcb plu
 | Input | Action |
 | --- | --- |
 | Ctrl+O / drag local file into window | Open |
-| Left / Right | Previous / next supported file, without wrapping |
+| Left / Right | Previous / next supported image, video or music file; wraps with a six-second amber notice |
 | Wheel / left drag | Zoom towards pointer / pan |
 | R / middle click | Reset fit |
-| Space | Play / pause video |
+| Space | Play / pause video or music |
 | Transport bar | Seek ±5 seconds, timeline, volume, mute |
 | S / Screenshot button | Save media viewport to OS Pictures/AMP |
 | F / F11 / media double click | Toggle fullscreen |
@@ -54,6 +54,8 @@ Linux/Wayland and clean-machine installation are not yet validated. Qt's xcb plu
 | Ctrl+N | Independent new window |
 
 Screenshots read the last rendered media framebuffer without advancing video, exclude the controls/title bar, include visible bars/crop, and use physical viewport pixels. Existing files are never overwritten. If saving fails, the capture stays in memory and S retries it; closing the window discards this in-memory retry. Source media is never changed.
+
+Music uses the same playback/seek/volume controls and a simple filename view. Screenshots and reset-fit are disabled in music mode. MP3, FLAC, WAV, Ogg/Vorbis, Opus, M4A/AAC, WMA and AIFF decoding were exercised with synthetic fixtures on the local runtime; codec support depends on the installed libmpv build. Playback stops at a track's end; use Left/Right to choose another file. Folder wrapping works in both directions, skips unreadable images, and does not restart a lone file. Tests ran at zero volume; audible output remains a manual listening check.
 
 ## Preview status and limitations
 

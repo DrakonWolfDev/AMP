@@ -1,6 +1,12 @@
 # AMP — Andy’s Media Player
 ## Product roadmap | v0.1 first usable beta
 
+### Scope update — 2026-10-18
+
+Local **music file playback** is now part of v0.1, alongside images and video. M4 covers music autoplay, play/pause, seeking, duration, volume/mute and clean switching using the existing per-window libmpv backend. Offer a simple music/filename view; hide image/video-only actions. Test MP3, FLAC, WAV, Ogg/Vorbis, Opus, M4A/AAC, WMA and AIFF against the chosen runtime. No library, streaming, playlist management, automatic next-track playback or track-repeat feature is added.
+
+M2 now requires **circular folder navigation**: Right at the last supported file returns to the first; Left at the first returns to the last. Include supported images, videos and music in the same natural order. Display a prominent amber notice for six seconds identifying a return to the beginning or end; keep it outside screenshot content. A single-file folder stays on that file without restarting playback. Skip unreadable candidates at most once per navigation action; retain the wrap notice if unreadable files straddle the boundary. This explicitly replaces the earlier no-wrap requirement wherever stated below or in the original prompt. M7 covers the notice's visual treatment; M8 covers music independence and shutdown.
+
 ### 1. The idea
 
 AMP is a small, fast, local **image and video viewer for Linux and Windows**. Open a file, see it fitted correctly, zoom with the mouse wheel, drag to pan, move through the files in that folder with the arrow keys, and save **exactly the media view on screen** as a PNG. Video gets normal playback and volume controls. Nothing more complicated should get in the way.
@@ -25,7 +31,8 @@ AMP is a small, fast, local **image and video viewer for Linux and Windows**. Op
 | Mouse wheel | Zoom towards/away from cursor location for both images and videos, with sensible bounds and steps. No window resizing. |
 | Left-drag on media | Pan an enlarged image or playing/paused video. Do not accidentally seek or move the window. Clamp or otherwise avoid losing the media completely. |
 | Reset | Middle-click restores fit and centred pan; also expose a visible/keyboard reset action. |
-| Folder navigation | Left/right arrows open previous/next *supported* media in the same directory, in deterministic natural filename order. Skip missing/bad files with a concise explanation. No recursive scan and no unintended wrap-around. |
+| Folder navigation | Left/right arrows open previous/next supported image, video or music file in the same directory in natural order. Wrap at either end with a six-second amber beginning/end notice. Skip unreadable files with a concise explanation, without recursive scanning or repeatedly retrying the same file. |
+| Music | Local audio autoplay, play/pause, seek, duration, volume/mute and a calm filename view. No image/video screenshot or zoom actions in music mode. End-of-track stops; file navigation remains manual. |
 | Video | Autoplay after opening; play/pause, seek slider, short backward/forward seek, volume/mute and duration/current time. Seeking is separate from left/right folder navigation. |
 | Keyboard | Space = play/pause (video); Left/Right = previous/next file; F or F11 = fullscreen; Esc = leave fullscreen; Ctrl+O = open; Ctrl+N = new independent window; S = screenshot; R = reset fit. Keep keys consistent in image and video views. |
 | Window | Double-click media toggles fullscreen. Multiple windows/processes work independently. Show filename discreetly. Minimise clutter. |
@@ -67,10 +74,10 @@ The mouse cursor and OS window borders are not part of the saved media screensho
 
 **Gate:** Portrait, landscape, huge and oddly shaped images preserve proportions; zoom does not jump away from the pointed detail; resetting restores fit exactly.
 
-#### M4 — Video playback
+#### M4 — Video and music playback
 **Do:** Wire one mpv core/render context per AMP window; immediate local playback, pause, seek, timeline, audio volume/mute, end-of-file behaviour and clean media switching. Avoid libmpv operations inside forbidden render callbacks; schedule UI-thread work safely.
 
-**Gate:** MP4/H.264, MKV and WebM test samples play as supported by the selected libmpv build. Time/seek/volume updates work and media switches do not leave audio playing in the background.
+**Gate:** MP4/H.264, MKV, WebM and the agreed local music formats play as supported by the selected libmpv build. Time/seek/volume updates work; music/image/video mode switches restore appropriate controls and do not leave audio playing in the background.
 
 #### M5 — Same zoom/pan experience for video
 **Do:** Integrate cursor-anchored wheel zoom and drag-pan using mpv's supported video zoom and pan model; reset to centred fit; preserve letterboxing and correct proportions. Keep input mapping and clipping consistent with image mode.

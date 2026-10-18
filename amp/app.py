@@ -9,6 +9,7 @@ from PySide6.QtGui import QAction, QSurfaceFormat
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
+    QLabel,
     QMainWindow,
     QToolBar,
     QVBoxLayout,
@@ -17,7 +18,7 @@ from PySide6.QtWidgets import (
 
 from .capture import save_capture
 from .controls import VideoControls
-from .folder_navigator import IMAGE_SUFFIXES, VIDEO_SUFFIXES, neighbours
+from .folder_navigator import AUDIO_SUFFIXES, IMAGE_SUFFIXES, VIDEO_SUFFIXES, navigation_steps
 from .viewport import MediaViewport
 
 
@@ -35,6 +36,16 @@ class Window(QMainWindow):
         layout = QVBoxLayout(body)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
+        self.loop_notice = QLabel(self)
+        self.loop_notice.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.loop_notice.setStyleSheet(
+            "background: #f6ce73; color: #242018; padding: 10px; font-weight: bold;"
+        )
+        self.loop_notice.hide()
+        layout.addWidget(self.loop_notice)
+        self.loop_timer = QTimer(self)
+        self.loop_timer.setSingleShot(True)
+        self.loop_timer.timeout.connect(self.loop_notice.hide)
         layout.addWidget(self.viewport, 1)
         self.controls = VideoControls(self)
         self.controls.hide()
@@ -50,6 +61,7 @@ class Window(QMainWindow):
         toolbar = QToolBar("Media", self)
         toolbar.setMovable(False)
         self.addToolBar(toolbar)
+        self.actions_by_name = {}
         for text, shortcut, callback in (
             ("Open file", "Ctrl+O", self.choose),
             ("New window", "Ctrl+N", self.new_window),
@@ -64,8 +76,9 @@ class Window(QMainWindow):
             action.setShortcut(shortcut)
             action.triggered.connect(callback)
             toolbar.addAction(action)
+            self.actions_by_name[text] = action
         self.statusBar().showMessage(
-            "Open a local image or video · wheel zoom · drag pan · R reset"
+            "Open local images, videos or music · Left/Right browse the folder"
         )
         QApplication.instance().installEventFilter(self)
 
@@ -86,17 +99,27 @@ class Window(QMainWindow):
                 self.viewport.open_image(path)
             elif path.suffix.lower() in VIDEO_SUFFIXES:
                 self.viewport.open_video(path)
+            elif path.suffix.lower() in AUDIO_SUFFIXES:
+                self.viewport.open_audio(path)
             else:
-                raise RuntimeError("Choose a supported local image or video file.")
+                raise RuntimeError("Choose a supported local image, video or music file.")
             self.setWindowTitle(f"{path.name} — AMP")
             self.current_path = path
-            self.controls.setVisible(self.viewport.video)
+            self.loop_timer.stop()
+            self.loop_notice.hide()
+            self.controls.setVisible(self.viewport.playable)
+            self.actions_by_name["Screenshot"].setEnabled(not self.viewport.audio)
+            self.actions_by_name["Reset fit"].setEnabled(not self.viewport.audio)
             self.controls.update_property("duration", 0)
             self.controls.update_property("time-pos", 0)
-            if self.viewport.video:
+            if self.viewport.playable:
                 self.video_set("volume", self.controls.volume.value())
                 self.video_set("mute", self.controls.mute.isChecked())
-            self.notify("Wheel zoom · drag pan · R reset")
+            self.notify(
+                "Space play/pause · Left/Right browse the folder"
+                if self.viewport.audio
+                else "Wheel zoom · drag pan · R reset"
+            )
             return True
         except (RuntimeError, OSError, ValueError) as error:
             self.notify(str(error))
@@ -107,26 +130,34 @@ class Window(QMainWindow):
             return
         skipped = 0
         try:
-            for path in neighbours(self.current_path, direction):
-                if self.open_path(path):
-                    if skipped:
-                        self.notify(f"Skipped {skipped} unreadable file(s).")
+            for step in navigation_steps(self.current_path, direction):
+                if self.open_path(step.path):
+                    message = f"Skipped {skipped} unreadable file(s)." if skipped else ""
+                    if step.wrapped:
+                        boundary = "beginning" if direction > 0 else "end"
+                        clue = f"↻ Folder looped — back to the {boundary}"
+                        self.loop_notice.setText(clue)
+                        self.loop_notice.show()
+                        self.loop_timer.start(6000)
+                        message = f"{clue}. {message}".strip()
+                    if message:
+                        self.notify(message)
                     return
                 skipped += 1
-            self.notify("No more supported files in this direction.")
+            self.notify("No other readable supported files in this folder.")
         except OSError:
             self.notify("This folder is unavailable. Open another local file.")
 
     def video_set(self, name, value):
-        if self.viewport.video and self.viewport.backend:
+        if self.viewport.playable and self.viewport.backend:
             self.viewport.backend.set(name, value)
 
     def pause(self):
-        if self.viewport.video and self.viewport.backend:
+        if self.viewport.playable and self.viewport.backend:
             self.viewport.backend.command("cycle", "pause")
 
     def seek(self, seconds, mode):
-        if self.viewport.video and self.viewport.backend:
+        if self.viewport.playable and self.viewport.backend:
             self.viewport.backend.command("seek", seconds, mode)
 
     def screenshot(self):
@@ -200,8 +231,8 @@ def create_application():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="AMP — local image and video viewer")
-    parser.add_argument("path", nargs="?", help="local image or video")
+    parser = argparse.ArgumentParser(description="AMP — local image, video and music player")
+    parser.add_argument("path", nargs="?", help="local image, video or music file")
     args = parser.parse_args()
     app = create_application()
     window = Window()

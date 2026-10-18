@@ -18,7 +18,7 @@ def load_binding():
         return importlib.import_module("mpv")
     except (ImportError, OSError) as error:
         raise RuntimeError(
-            "Video needs libmpv. On Windows set AMP_MPV_DIR to the folder containing "
+            "Music and video need libmpv. On Windows set AMP_MPV_DIR to the folder containing "
             "libmpv-2.dll; on Linux install libmpv (for Mint: sudo apt install libmpv2). "
             "Images still work without it."
         ) from error
@@ -77,7 +77,7 @@ class MpvBackend(QObject):
 
     def _ended(self, event):
         if not self.closed and event.data.reason == self.binding.MpvEventEndFile.ERROR:
-            self.failed.emit("This video could not be decoded. Try another local file.")
+            self.failed.emit("This media could not be decoded. Try another local file.")
 
     def submit(self, fn, *args):
         if self.closed:

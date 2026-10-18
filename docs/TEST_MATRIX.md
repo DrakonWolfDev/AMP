@@ -1,5 +1,7 @@
 # Test matrix — 2026-10-18
 
+Music/wrap update: 15 unit tests pass, including circular ordering, wrap flags in both directions, deleted anchors and single-file folders. The live Windows music probe exercises nine audio extensions (WAV/MP3/FLAC/Ogg/Opus/M4A/AAC/WMA/AIFF), transport/seek, mode switching and visible forward/backward loop banners. The probe uses zero volume, so this verifies decoding and transport rather than audible sound. See docs/evidence/windows-music.json. The historical navigation boundary checks below refer to the earlier preview; current behaviour intentionally wraps. Linux remains untested.
+
 Windows development desktop: Python 3.12.10, Qt/PySide6 Essentials 6.12.0, python-mpv 1.0.8, PyOpenGL 3.1.10, mpv v0.41.0-dev-gfffe7a23a; Intel Iris Xe OpenGL 3.3.0 (31.0.101.3729). Native scaling: 125%. Effective 100% and 150% used Qt overrides, not changed OS settings.
 
 | Area | Windows result | Mint 22.3 |
