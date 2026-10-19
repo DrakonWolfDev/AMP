@@ -179,6 +179,13 @@ def icon(name, colour="#dce0e6"):
                 painter.drawLine(17, 14, 21, 10)
             else:
                 painter.drawArc(11, 5, 10, 14, -65 * 16, 130 * 16)
+        elif name == "cc":
+            painter.drawRoundedRect(QRectF(3.5, 6.5, 17, 11), 2, 2)
+            font = painter.font()
+            font.setPixelSize(7)
+            font.setBold(True)
+            painter.setFont(font)
+            painter.drawText(QRectF(3.5, 6.5, 17, 11), Qt.AlignmentFlag.AlignCenter, "CC")
         elif name == "more":
             for x in (5, 12, 19):
                 painter.setBrush(QColor(colour))

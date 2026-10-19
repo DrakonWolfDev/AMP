@@ -47,7 +47,7 @@ AMP's own code is Copyright © 2026 Andrew Hodgson trading as Wolf Forge, licens
 
 ## Python and development tools
 
-The private Windows standalone preview embeds CPython 3.12.10 and the PyInstaller 6.22.3 bootloader. Its build helper copies the interpreter's LICENSE.txt and PyInstaller's COPYING.txt (including its bootloader exception) into the bundle's LICENSES directory. PyInstaller and its hook/tool dependencies are build-time tools, not additional playback libraries. The Inno Setup 6.7.3 compiler creates the private Windows installer; its unmodified licence is preserved in LICENSES/InnoSetup-6.7.3.txt. See docs/RELEASE_READINESS.md for the exact tested artifact and outstanding release obligations.
+The Windows standalone build embeds CPython and the PyInstaller bootloader. Its build helper copies the interpreter's LICENSE.txt and PyInstaller's COPYING.txt (including its bootloader exception) into the bundle's LICENSES directory. PyInstaller and its hook/tool dependencies are build-time tools, not additional playback libraries. Inno Setup creates the Windows installer; its unmodified licence is preserved in LICENSES/InnoSetup-6.7.3.txt. See docs/RELEASE_READINESS.md for outstanding release obligations.
 
 Pillow 13.0.0 is used only to generate synthetic image/EXIF test fixtures, not to decode images in AMP. Its installed metadata identifies MIT-CMU; the complete installed licence is preserved at LICENSES/Pillow-13.0.0.txt. Source: https://github.com/python-pillow/Pillow. Preserve its notices if distributing the development environment.
 
@@ -55,4 +55,4 @@ The current source installation uses the user's Python interpreter. A future ins
 
 ## Scope and provenance
 
-The AGPL text is copied verbatim from the user's existing WolfLauncher LICENSE. LGPL 2.1 texts are copied from the installed python-mpv wheel and downloaded libmpv archive. LGPLv3/GPLv3 texts are preserved from upstream Qt's LICENSES directory; PyOpenGL's full notice is from tag 3.1.10. See docs/LICENSING.md for the distribution policy and outstanding release work. No codec-patent clearance is asserted by choosing an open-source licence.
+The AGPL text is the standard upstream licence text. LGPL 2.1 texts are copied from the installed python-mpv wheel and downloaded libmpv archive. LGPLv3/GPLv3 texts are preserved from upstream Qt's LICENSES directory; PyOpenGL's full notice is from tag 3.1.10. See docs/LICENSING.md for the distribution policy and outstanding release work. No codec-patent clearance is asserted by choosing an open-source licence.

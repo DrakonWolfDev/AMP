@@ -1,4 +1,4 @@
-; Build only after validating the private bundle; this does not publish anything.
+; Compile an installer from a validated one-folder bundle.
 #ifndef BundleRoot
   #error BundleRoot must point to a validated AMP bundle
 #endif
@@ -12,7 +12,7 @@
 AppId={{DF5713F5-6E84-4EA3-9330-A510C77819DD}
 AppName=AMP
 AppVersion={#AppVersion}
-AppVerName=AMP {#AppVersion} private preview
+AppVerName=AMP {#AppVersion}
 AppPublisher=Wolf Forge
 AppPublisherURL=https://wolf-forge.co.uk
 AppSupportURL=https://github.com/DrakonWolfDev/AMP/issues
@@ -24,7 +24,7 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.17763
 OutputDir={#OutputRoot}
-OutputBaseFilename=AMP-{#AppVersion}-private-preview-setup
+OutputBaseFilename=AMP-{#AppVersion}-setup
 SetupIconFile={#SourcePath}\..\..\amp\assets\amp.ico
 UninstallDisplayIcon={app}\AMP.exe
 LicenseFile={#BundleRoot}\_internal\LICENSE
@@ -35,7 +35,7 @@ CloseApplications=yes
 RestartApplications=no
 ChangesAssociations=yes
 VersionInfoCompany=Wolf Forge
-VersionInfoDescription=AMP private preview installer
+VersionInfoDescription=AMP installer
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop shortcut"; Flags: unchecked
 Name: "fileassociations"; Description: "Register AMP in Open with (keep existing defaults)"; GroupDescription: "File associations:"; Flags: unchecked

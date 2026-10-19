@@ -22,7 +22,12 @@ def test_window_preferences_reach_core_before_autoplay_load(method):
     path = Path("chosen-media.mp4")
     method(viewport, path, playback_options={"volume": 17, "mute": True, "loop-file": "inf"})
     calls = backend.method_calls
-    load = calls.index(call.load(path, 1))
+    expected_load = (
+        call.load(path, 1, subtitles=[])
+        if method is MediaViewport.open_video
+        else call.load(path, 1)
+    )
+    load = calls.index(expected_load)
     assert calls.index(call.set("volume", 17)) < load
     assert calls.index(call.set("mute", True)) < load
     assert calls.index(call.set("loop-file", "inf")) < load

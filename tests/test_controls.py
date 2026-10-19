@@ -114,3 +114,21 @@ def test_speed_slider_reset_and_observer_sync(controls):
     assert controls.speed.value() == 10
     assert controls.speed_label.text() == "0.5×"
     assert requests == [1.5, 1.0]
+
+
+def test_cc_button_is_hidden_and_off_until_a_subtitle_track_exists(controls):
+    requests = []
+    controls.subtitles_requested.connect(requests.append)
+    assert controls.subtitles.isHidden()
+    assert not controls.subtitles.isChecked()
+
+    controls.update_property("track-list", [{"type": "video"}, {"type": "sub"}])
+    assert controls.subtitles.isVisible()
+    controls.subtitles.click()
+    assert requests == [True]
+
+    controls.update_property("sub-visibility", False)
+    assert not controls.subtitles.isChecked()
+    assert requests == [True]
+    controls.update_property("track-list", [{"type": "video"}])
+    assert controls.subtitles.isHidden()

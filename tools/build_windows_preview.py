@@ -1,4 +1,4 @@
-"""Build/test a private portable AMP and optional Inno installer; never publish."""
+"""Build and validate a portable AMP bundle and optional Inno installer."""
 
 import argparse
 import hashlib
@@ -34,7 +34,7 @@ def main():
         args.iscc
         and digest(args.iscc) != "0a8757031b33777e4c9cbffee40f11a5062b36d25cbe144c1db73b6102b80ad7"
     ):
-        parser.error("Compiler hash differs from the verified WolfLauncher Inno 6.7.3 tool.")
+        parser.error("Compiler hash differs from the validated Inno Setup 6.7.3 compiler.")
     output.mkdir(parents=True)
     report = {"passed": False, "published": False, "release_ready": False, "checks": []}
     environment = os.environ.copy()
@@ -77,8 +77,9 @@ def main():
         for path in freezer.files or []:
             if Path(path).name == "COPYING.txt":
                 shutil.copyfile(freezer.locate_file(path), legal / "PyInstaller.txt")
-        (bundle / "PRIVATE_PREVIEW.txt").write_text(
-            "Private validation build only. Not release-cleared. Exact transitive sources/notices and clean-machine/platform validation remain pending. See docs/CODEC_AUDIT.md and docs/RELEASE_READINESS.md in the source tree.\n",
+        (bundle / "BUILD_INFORMATION.txt").write_text(
+            "Built from the AMP source tree. See THIRD_PARTY_NOTICES.md and the LICENSES folder "
+            "for licensing information. Validate installation and playback on the target system.\n",
             encoding="utf-8",
         )
         forbidden = [

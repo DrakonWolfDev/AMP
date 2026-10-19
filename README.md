@@ -4,7 +4,7 @@ A small, private-by-design desktop player for local images, videos and music on 
 
 AMP will fit media to the viewport, offer cursor-focused zoom and drag-pan, browse neighbouring files, and save the visible media viewport as a PNG. Video playback and each window's state remain independent. No accounts, telemetry, cloud services, or media library scans.
 
-## Run the Windows preview
+## Run from source on Windows
 
 Python 3.12 or newer, 64-bit Windows, and a working OpenGL 3.3 driver are required. In PowerShell from this folder:
 
@@ -25,7 +25,21 @@ $env:AMP_MPV_DIR = (Resolve-Path artifacts/runtime/libmpv).Path
 
 Images can open without libmpv; opening video without the runtime shows installation guidance in the status bar.
 
-## Linux development setup (not yet exercised)
+## Install on Linux Mint
+
+Build the Debian package (or use a supplied build), then install it with APT:
+
+```sh
+.venv/bin/python -m pip install -r requirements-linux-build.txt
+.venv/bin/python tools/build_linux_deb.py --output artifacts/linux-deb
+sudo apt install ./artifacts/linux-deb/amp-media-player_0.0.1_amd64.deb
+```
+
+The package registers AMP with the desktop's **Open With** list for its supported image,
+video and audio types without changing existing defaults. It also installs the `amp`
+command, so `amp /path/to/media.mkv` works from a terminal.
+
+## Linux development setup
 
 On Mint 22.3, install Python 3.12 with venv support, `libmpv2`, and Qt/OpenGL runtime dependencies (`libegl1`, `libopengl0`, `libgl1`). The Ubuntu CI runner needed these libraries before Qt image tests could import. Then:
 
@@ -36,7 +50,7 @@ python -m pip install -e '.[dev]'
 python -m amp /path/to/media.mp4
 ```
 
-Linux/Wayland and clean-machine installation are not yet validated. Qt's xcb plugin may need distribution packages such as `libxcb-cursor0`.
+Qt's xcb plugin may need distribution packages such as `libxcb-cursor0`.
 
 ## Controls
 
@@ -44,14 +58,21 @@ Images: PNG, JPEG/JPG/JFIF, BMP, WebP, GIF (first frame), and TIFF/TIF (first pa
 
 Video extensions accepted: MP4, MKV, WebM, MOV, AVI, M4V, MPG/MPEG, WMV, TS, MTS and M2TS. Tested samples include H.264/AAC MP4 and transport streams, H.264 MKV, silent MKV, VP9 WebM and WMV2/WMA WMV. Extensions identify containers, not a guarantee that every codec/profile inside them will decode on every runtime.
 
+For local subtitles, place a matching SRT file beside the video. `Film.srt`, `Film.en.srt`
+and similar `Film.<label>.srt` names are attached when `Film.mkv` (or another supported video)
+opens. The exact-name subtitle is selected first. AMP checks only that folder and matching basename;
+recursive and general external-file autoloading remain disabled. Subtitles start hidden for each
+video; use the CC button in the playback controls to show or hide them.
+
 | Input | Action |
 | --- | --- |
 | Ctrl+O / drag local file into window | Open |
 | Left / Right | Previous / next supported image, video or music file; wraps with a three-second amber notice |
 | Wheel / left drag | Zoom towards pointer / pan |
-| R / middle click | Reset fit |
+| R | Reset fit |
+| Optional wheel-navigation mode | Wheel up/down selects previous/next; middle click toggles wheel zoom/navigation |
 | Space | Play / pause video or music; Replay from the end |
-| Transport bar | Seek ±5 seconds, timeline, volume, mute |
+| Transport bar | Seek ±5 seconds, timeline, CC subtitles, volume, mute |
 | S / camera icon / Screenshot in the menu | Save media viewport to OS Pictures/AMP |
 | F / F11 / media double click | Toggle fullscreen |
 | Esc | Leave fullscreen |
@@ -67,11 +88,11 @@ Music uses the same playback/seek/volume controls, with local artwork, lyrics an
 
 The timeline supports direct click-to-seek and dragging across its full height, including near either end.
 
-At end of file the transport shows **Replay**; clicking it or pressing Space starts the same media from the beginning. Playback does not automatically advance. Repeat is off by default and can be enabled explicitly in Settings. Short seeks and timeline seeks are clamped to the file's duration. Mute shows the volume slider at zero and restores the retained level when unmuted. Moving the volume slider above zero unmutes playback. Mute is remembered for future windows; their restore level uses the configured default volume. Video has a speed slider to the left of the transport buttons (0.25??2?); click its multiplier to reset to 1?. Each newly opened file starts at normal speed, and music hides this control. Volume/mute widgets follow decoder changes, and seek controls are disabled when seeking is unavailable. Per-file state is refreshed even for consecutive files with identical durations.
+At end of file the transport shows **Replay**; clicking it or pressing Space starts the same media from the beginning. Playback does not automatically advance. Repeat is off by default and can be enabled explicitly in Settings. Short seeks and timeline seeks are clamped to the file's duration. Mute shows the volume slider at zero and restores the retained level when unmuted. Moving the volume slider above zero unmutes playback. Mute is remembered for future windows; their restore level uses the configured default volume. Video has a speed slider to the left of the transport buttons (0.25×–2×); click its multiplier to reset to 1×. Each newly opened file starts at normal speed, and music hides this control. Volume/mute widgets follow decoder changes, and seek controls are disabled when seeking is unavailable. Per-file state is refreshed even for consecutive files with identical durations.
 
-## Preview status and limitations
+## Status and limitations
 
-Runnable early Windows preview. Real GL probes passed with image and H.264 video capture, transforms, seek/resize/switch/shutdown at 100%, native 125%, and 150% effective Qt scaling. A second integration probe exercised playback controls, natural folder navigation, H.264 MP4/MKV, VP9 WebM, and two independent video windows. See [recorded results](docs/TEST_MATRIX.md).
+Real GL probes on Windows passed image and H.264 video capture, transforms, seek/resize/switch/shutdown at 100%, native 125%, and 150% effective Qt scaling. Linux Mint testing covers images, video, music, subtitles, local/NAS media, and PipeWire audio.
 
 ### Offline music artwork and lyrics
 
@@ -85,7 +106,7 @@ Button hover hints are drawn inside AMP rather than opening separate native tool
 
 Menus and AMP dialogs use a shared dark palette with restrained amber accents. About includes Wolf Forge copyright and project attribution with paw prints, plus Website and GitHub links that open your browser only when clicked; dialog content scrolls in smaller windows while footer actions remain available.
 
-The media fills the canvas. Small floating icon controls and the filename fade after 2.2 seconds of inactivity; fullscreen video also hides the idle pointer. There are no permanent menu or status bars. The three-dot menu or right click exposes secondary actions, Settings and help. Image mode has a small navigation/reset/capture dock; playback uses a compact floating timeline and transport. Pointer movement or Tab reveals them; hover, keyboard focus, slider dragging and open menus keep them visible. Image mode hides playback controls. The menu lists keyboard help; native window decorations remain available. All eight EXIF orientation cases, portrait/ultrawide images, a 6000×4000 PNG, transparency, mouse/keyboard controls and physical-pixel image capture passed Windows probes at 125% and 150% effective scaling. Windows WASAPI audio-output creation/release, image/silent-video switching, EOF/replay and independent audio-window shutdown passed zero-volume checks; audible sound quality/latency still needs a listening check. OS file associations and multi-monitor DPI transitions remain untested. Navigation skips corrupt images, videos and music in the chosen direction and stops after trying each candidate once if none is readable. Opening a corrupt file directly reports an error and leaves manual navigation available. Settings stores repeat-current-file (off by default), default volume for new windows, and the folder-wrap notice duration (three seconds by default, adjustable from one to ten). Repeat applies immediately to this window and future windows; other open windows keep their current state. Hardware decoding is deliberately disabled in this first probe. A private Windows standalone executable and Inno installer have now been built and smoke-tested; clean-machine installation, Linux standalone delivery and final redistribution gates remain pending. Nothing has been published. See [v1 release readiness](docs/RELEASE_READINESS.md). Local wheel/source builds and offline fresh-venv installation checks are documented in [packaging notes](docs/PACKAGING.md).
+The media fills the canvas. Small floating icon controls and the filename fade after 2.2 seconds of inactivity; fullscreen video also hides the idle pointer. There are no permanent menu or status bars. The three-dot menu or right click exposes secondary actions, Settings and help. Previous/next buttons remain fixed at the left and right sides for every media format. Image mode has a small reset/capture dock; playback uses a compact floating timeline and transport. Pointer movement or Tab reveals them; hover, keyboard focus, slider dragging and open menus keep them visible. Image mode hides playback controls. The menu lists keyboard help; native window decorations remain available. Navigation skips corrupt images, videos and music in the chosen direction and stops after trying each candidate once if none is readable. Opening a corrupt file directly reports an error and leaves manual navigation available. Settings stores repeat-current-file (off by default), default volume for new windows, the folder-wrap notice duration, and optional wheel navigation. Hardware decoding is disabled. See [release readiness](docs/RELEASE_READINESS.md) and [packaging notes](docs/PACKAGING.md).
 
 ## Checks
 
@@ -119,21 +140,18 @@ The renderer probe generates synthetic local fixtures and PNGs in ignored `artif
 ## Specification
 
 - [Product roadmap](AMP_ROADMAP.md): behaviour and milestone acceptance criteria.
-- [Implementation prompt](CODEX_PROMPT.md): engineering requirements supplied with the project.
 - [Implementation plan](docs/IMPLEMENTATION_PLAN.md): build order and validation.
-- [Progress](docs/PROGRESS.md): verified status and environment.
 - [Local packaging](docs/PACKAGING.md): offline builds, exact dependency inventory and fresh-install checks.
-- [Handover](docs/HANDOVER.md): current milestones and remaining platform/release gates.
 - [Technical risks](docs/TECHNICAL_RISKS.md): renderer gate and open decisions.
 - [Test matrix](docs/TEST_MATRIX.md): planned platform checks.
 
 The stack is Python, PySide6/Qt 6 Essentials, PyOpenGL for readback, Mutagen for local music tags, and python-mpv wrapping libmpv's OpenGL Render API. All media operations are local. mpv user configuration/scripts, external-file autoloading and reference following are disabled; FFmpeg protocols are restricted to local files. No network feature, analytics, database or background scan is implemented. No diagnostics log is written. Mute is remembered automatically when toggled; other preferences are stored when you save Settings, using Qt's local AppConfigLocation: `%LOCALAPPDATA%/AMP/AMP/preferences.ini` on Windows and `${XDG_CONFIG_HOME:-~/.config}/AMP/AMP/preferences.ini` on Linux. No media paths or playback history are stored. Delete this file while AMP is closed to restore defaults.
 
-AMP is licensed under the [GNU Affero General Public License, version 3 only](LICENSE) (`AGPL-3.0-only`), matching WolfLauncher. Copyright © 2026 Andrew Hodgson trading as Wolf Forge. Dependencies retain their own licences; see [third-party notices](THIRD_PARTY_NOTICES.md) and the [licensing policy](docs/LICENSING.md). The repository remains private; the binary/runtime redistribution audit is still required before a release.
+AMP is licensed under the [GNU Affero General Public License, version 3 only](LICENSE) (`AGPL-3.0-only`). Copyright © 2026 Andrew Hodgson trading as Wolf Forge. Dependencies retain their own licences; see [third-party notices](THIRD_PARTY_NOTICES.md) and the [licensing policy](docs/LICENSING.md). Complete the binary/runtime redistribution audit before publishing binary releases.
 
 
 ### OS file associations
 
 The Windows installer offers an optional, unchecked **Register AMP in Open with (keep existing defaults)** task. It registers supported images, video and music for the current user and advertises AMP to Windows Default apps. It does not replace existing defaults or write Windows UserChoice settings; choose AMP as a default through Windows Settings or Open with. Uninstall removes AMP registration values while preserving other applications' handlers. Native install/Open with/default selection/uninstall still need clean-machine verification.
 
-A Linux desktop entry with media MIME types is prepared under packaging/linux/amp.desktop. Installing it with the final Linux package and validating file-manager Open With/default-app integration remain part of Mint testing.
+The Debian package installs `packaging/linux/amp.desktop`, including supported media MIME types. Desktop environments then offer AMP in **Open With** while leaving current defaults unchanged.

@@ -12,7 +12,7 @@ from PySide6.QtGui import QImage, QPainter
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
 from .image_backend import read_image
-from .mpv_backend import MpvBackend
+from .mpv_backend import MpvBackend, companion_subtitles
 from .music import Music
 from .music_view import MusicView
 from .view_transform import ViewTransform
@@ -23,6 +23,8 @@ class MediaViewport(QOpenGLWidget):
     ready = Signal()
     render_requested = Signal()
     fullscreen_requested = Signal()
+    navigation_requested = Signal(int)
+    wheel_mode_changed = Signal(bool)
     video_changed = Signal(str, object)
     media_failed = Signal(str)
 
@@ -39,10 +41,13 @@ class MediaViewport(QOpenGLWidget):
         self.initialized = False
         self.closed = False
         self.drag_position = None
+        self.wheel_navigation_enabled = False
+        self.wheel_zoom_mode = False
         self.render_count = 0
         self.load_serial = 0
         self.rendered_serial = -1
         self.rendered_size = None
+        self.framebuffer_format_cache = None
         self.setMinimumSize(160, 100)
         # Keep the last composited framebuffer available for capture between frames.
         self.setUpdateBehavior(QOpenGLWidget.UpdateBehavior.PartialUpdate)
@@ -155,7 +160,11 @@ class MediaViewport(QOpenGLWidget):
         self.transform.media_width, self.transform.media_height = 1, 1
         self.reset()
         self.backend.set("pause", False)
-        self.backend.load(path, self.load_serial)
+        self.backend.load(
+            path,
+            self.load_serial,
+            subtitles=companion_subtitles(path),
+        )
 
     @property
     def playable(self):
@@ -191,7 +200,12 @@ class MediaViewport(QOpenGLWidget):
             self.renderer.update()
             self.renderer.render(
                 flip_y=True,
-                opengl_fbo={"fbo": self.defaultFramebufferObject(), "w": width, "h": height},
+                opengl_fbo={
+                    "fbo": self.defaultFramebufferObject(),
+                    "w": width,
+                    "h": height,
+                    "internal_format": self.framebuffer_internal_format(),
+                },
             )
             self.render_count += 1
         elif not self.image.isNull():
@@ -207,6 +221,48 @@ class MediaViewport(QOpenGLWidget):
 
         self.rendered_serial = self.load_serial
         self.rendered_size = (width, height)
+
+    def framebuffer_internal_format(self):
+        """Describe Qt's current colour attachment accurately to libmpv."""
+        try:
+            kind = GL.glGetFramebufferAttachmentParameteriv(
+                GL.GL_FRAMEBUFFER,
+                GL.GL_COLOR_ATTACHMENT0,
+                GL.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE,
+            )
+            name = GL.glGetFramebufferAttachmentParameteriv(
+                GL.GL_FRAMEBUFFER,
+                GL.GL_COLOR_ATTACHMENT0,
+                GL.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME,
+            )
+            key = (self.defaultFramebufferObject(), int(kind), int(name))
+            if self.framebuffer_format_cache and self.framebuffer_format_cache[0] == key:
+                return self.framebuffer_format_cache[1]
+            if kind == GL.GL_TEXTURE:
+                previous = GL.glGetIntegerv(GL.GL_TEXTURE_BINDING_2D)
+                try:
+                    GL.glBindTexture(GL.GL_TEXTURE_2D, name)
+                    internal_format = GL.glGetTexLevelParameteriv(
+                        GL.GL_TEXTURE_2D, 0, GL.GL_TEXTURE_INTERNAL_FORMAT
+                    )
+                finally:
+                    GL.glBindTexture(GL.GL_TEXTURE_2D, previous)
+            elif kind == GL.GL_RENDERBUFFER:
+                previous = GL.glGetIntegerv(GL.GL_RENDERBUFFER_BINDING)
+                try:
+                    GL.glBindRenderbuffer(GL.GL_RENDERBUFFER, name)
+                    internal_format = GL.glGetRenderbufferParameteriv(
+                        GL.GL_RENDERBUFFER, GL.GL_RENDERBUFFER_INTERNAL_FORMAT
+                    )
+                finally:
+                    GL.glBindRenderbuffer(GL.GL_RENDERBUFFER, previous)
+            else:
+                internal_format = 0
+            internal_format = int(internal_format)
+            self.framebuffer_format_cache = (key, internal_format)
+            return internal_format
+        except (GLError, TypeError, ValueError):
+            return 0
 
     def resizeGL(self, width, height):
         self.transform.resize(self.width(), self.height())
@@ -225,6 +281,12 @@ class MediaViewport(QOpenGLWidget):
         self.apply_transform()
 
     def wheelEvent(self, event):
+        if self.wheel_navigation_enabled and not self.wheel_zoom_mode:
+            delta = event.angleDelta().y() or event.angleDelta().x()
+            if delta:
+                self.navigation_requested.emit(-1 if delta > 0 else 1)
+            event.accept()
+            return
         if self.audio:
             if self.music_view.show_lyrics and not self.music_view.music.lyrics.times:
                 self.music_view.scroll -= event.angleDelta().y() / 2
@@ -238,12 +300,23 @@ class MediaViewport(QOpenGLWidget):
         event.accept()
 
     def mousePressEvent(self, event):
-        if self.audio:
-            return
         if event.button() == Qt.MouseButton.MiddleButton:
+            if self.wheel_navigation_enabled:
+                self.wheel_zoom_mode = not self.wheel_zoom_mode
+                self.wheel_mode_changed.emit(self.wheel_zoom_mode)
+                event.accept()
+                return
+            if self.audio:
+                return
             self.reset()
+        elif self.audio:
+            return
         elif event.button() == Qt.MouseButton.LeftButton:
             self.drag_position = event.position()
+
+    def set_wheel_navigation(self, enabled):
+        self.wheel_navigation_enabled = bool(enabled)
+        self.wheel_zoom_mode = False
 
     def mouseMoveEvent(self, event):
         if self.drag_position is not None:

@@ -16,6 +16,14 @@ Image loading is isolated in image_backend.py. It keeps Qt's existing allocation
 
 This validates framebuffer composition, not a promise about exact operating-system compositor presentation latency. Multi-monitor/context recreation, other drivers and Linux remain open validation work. A destroyed context currently closes its viewport backend; automatic recovery after context loss is not implemented.
 
+On Mint 22.3 under X11 with an NVIDIA RTX 4060 and driver 595.99.02, Qt created an
+8-bit `GL_RGBA8` QOpenGLWidget framebuffer. Querying the active attachment at runtime and passing
+its format explicitly in `MPV_RENDER_PARAM_OPENGL_FBO` fixed incorrect purple VP9 output on the
+hardware OpenGL path; software OpenGL and VLC had already rendered the same file correctly. The
+runtime query also preserves compatibility if Qt selects a renderbuffer or a different colour
+format on another driver. The affected VP9 Profile 0/Opus MKV then rendered correctly through AMP
+without `LIBGL_ALWAYS_SOFTWARE`.
+
 M5/M6 track the media request and physical size last painted into the FBO and refuse capture if those no longer match. Disk writes reserve collision-safe names exclusively, detect short writes and attempt partial-file removal on failure. Failed saves retain the QImage for retry. Portrait/landscape known-pattern videos with explicit BT.709 conversion/tags provide composition-reference checks at DPR 1/1.25/1.5; no source-frame extraction is used as the actual capture. Dynamic video readback is separately tested; the pause comparison waits for decoder pause and a presented pause frame before comparing direct FBO bytes with Qt's repainting capture API.
 
 ## Local Windows runtime
@@ -31,7 +39,7 @@ The archive contains headers and LICENSE.LGPL. It is a development dependency un
 
 ## Licensing and packaging status
 
-AMP's own code is AGPL-3.0-only, matching WolfLauncher. See LICENSE, THIRD_PARTY_NOTICES.md and docs/LICENSING.md. PySide6/Qt Essentials 6.12.0 and shiboken6 6.12.0, python-mpv 1.0.8, PyOpenGL 3.1.10, and the exact libmpv build are the runtime inventory for this preview. Dependencies retain their original licences. The selected libmpv archive is labelled LGPL and carries LGPL 2.1 text; this label does not constitute a complete dependency or redistribution audit.
+AMP's own code is AGPL-3.0-only. See LICENSE, THIRD_PARTY_NOTICES.md and docs/LICENSING.md. PySide6/Qt Essentials 6.12.0 and shiboken6 6.12.0, python-mpv 1.0.8, PyOpenGL 3.1.10, and the exact libmpv build are the documented runtime inventory. Dependencies retain their original licences. The selected libmpv archive is labelled LGPL and carries LGPL 2.1 text; this label does not constitute a complete dependency or redistribution audit.
 
 Before shipping, inspect each exact distribution's metadata/licences and FFmpeg build configuration; complete dependency notices and corresponding-source/relinking obligations as applicable; and validate an installer on clean Mint and Windows machines. The licence texts/notices are included in Python distributions and legal information is accessible from Help → About AMP / licences. No bundled binary installer, codec-patent clearance, completed release-compliance conclusion, tag or release is provided here.
 

@@ -1,4 +1,4 @@
-# Private one-folder preview. Release notices/sources remain a separate gate.
+# Windows one-folder application bundle.
 import os
 from pathlib import Path
 

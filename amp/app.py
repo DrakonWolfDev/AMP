@@ -74,6 +74,9 @@ class Window(QMainWindow):
         self.viewport.failed.connect(self.notify)
         self.viewport.media_failed.connect(self.media_failed)
         self.viewport.fullscreen_requested.connect(self.toggle_fullscreen)
+        self.viewport.navigation_requested.connect(self.navigate)
+        self.viewport.wheel_mode_changed.connect(self.wheel_mode_changed)
+        self.viewport.set_wheel_navigation(self.preferences.wheel_navigation)
 
         self.actions_by_name = {}
         self.media_menu = QMenu(self)
@@ -203,19 +206,24 @@ class Window(QMainWindow):
         self.controls.seek_requested.connect(self.seek)
         self.controls.volume_requested.connect(lambda value: self.video_set("volume", value))
         self.controls.mute_requested.connect(self.set_muted)
+        self.controls.subtitles_requested.connect(
+            lambda visible: self.video_set("sub-visibility", visible)
+        )
         self.controls.speed_requested.connect(lambda value: self.video_set("speed", value))
         self.viewport.video_changed.connect(self.controls.update_property)
+        # Navigation stays in one physical location for every media type.
+        self.controls.previous.hide()
+        self.controls.next.hide()
+        self.previous_button = action_button(body, "Previous", "previous")
+        self.next_button = action_button(body, "Next", "next")
+        self.previous_button.hide()
+        self.next_button.hide()
         self.image_dock = FloatingPanel(body)
         self.image_dock.setObjectName("imageDock")
         image_layout = QHBoxLayout(self.image_dock)
         image_layout.setContentsMargins(7, 5, 7, 5)
         image_layout.setSpacing(5)
-        for name, symbol in (
-            ("Previous", "previous"),
-            ("Reset fit", "reset"),
-            ("Screenshot", "capture"),
-            ("Next", "next"),
-        ):
+        for name, symbol in (("Reset fit", "reset"), ("Screenshot", "capture")):
             image_layout.addWidget(action_button(self.image_dock, name, symbol))
         self.image_dock.hide()
 
@@ -246,6 +254,8 @@ class Window(QMainWindow):
             self.toolbar,
             self.controls,
             self.image_dock,
+            self.previous_button,
+            self.next_button,
             self.open_media,
             self.folder_browser,
         ]
@@ -286,6 +296,11 @@ class Window(QMainWindow):
         self.image_dock.adjustSize()
         self.image_dock.move(
             (width - self.image_dock.width()) // 2, height - self.image_dock.height() - 16
+        )
+        self.previous_button.move(16, (height - self.previous_button.height()) // 2)
+        self.next_button.move(
+            width - self.next_button.width() - 16,
+            (height - self.next_button.height()) // 2,
         )
         self.empty.adjustSize()
         self.empty.move((width - self.empty.width()) // 2, (height - self.empty.height()) // 2)
@@ -328,8 +343,12 @@ class Window(QMainWindow):
         if dialog.exec() == QDialog.DialogCode.Accepted:
             try:
                 self.preferences.save(
-                    dialog.repeat.isChecked(), dialog.volume.value(), dialog.banner.value()
+                    dialog.repeat.isChecked(),
+                    dialog.volume.value(),
+                    dialog.banner.value(),
+                    dialog.wheel_navigation.isChecked(),
                 )
+                self.viewport.set_wheel_navigation(self.preferences.wheel_navigation)
                 self.video_set("loop-file", "inf" if self.preferences.repeat else "no")
                 if self.loop_timer.isActive():
                     self.loop_timer.start(self.preferences.banner_seconds * 1000)
@@ -337,6 +356,16 @@ class Window(QMainWindow):
             except OSError as error:
                 self.notify(str(error))
         self.chrome.reveal()
+
+    def wheel_mode_changed(self, zoom_mode):
+        if self.viewport.audio and zoom_mode:
+            self.notify("Wheel zoom is unavailable for music; middle-click returns to navigation.")
+        else:
+            self.notify(
+                "Mouse wheel: zoom · middle-click returns to previous / next"
+                if zoom_mode
+                else "Mouse wheel: previous / next · middle-click switches to zoom"
+            )
 
     def about(self):
         AboutDialog(self).exec()
@@ -405,6 +434,8 @@ class Window(QMainWindow):
             self.controls.speed_panel.setVisible(self.viewport.playable and not self.viewport.audio)
             self.controls.update_property("speed", 1.0)
             self.image_dock.setVisible(not self.viewport.playable)
+            self.previous_button.show()
+            self.next_button.show()
             self.actions_by_name["Play / pause"].setVisible(self.viewport.playable)
             self.actions_by_name["Screenshot"].setEnabled(not self.viewport.audio)
             self.actions_by_name["Reset fit"].setEnabled(not self.viewport.audio)
@@ -412,6 +443,8 @@ class Window(QMainWindow):
             self.controls.update_property("time-pos", 0)
             self.controls.update_property("eof-reached", False)
             self.controls.update_property("pause", False)
+            self.controls.update_property("track-list", [])
+            self.controls.update_property("sub-visibility", False)
             self.open_media_button.setChecked(False)
             self.chrome.reveal()
             self.position_overlays()

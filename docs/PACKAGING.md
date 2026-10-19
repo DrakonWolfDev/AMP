@@ -1,44 +1,54 @@
-# Local package build and handover
+# Packaging AMP
 
-These steps build private development artifacts. They do not upload, tag or publish anything. AMP still requires Python 3.12+, a working OpenGL 3.3 driver and separately installed libmpv. A wheel is an installable Python package, not a standalone executable or installer.
+Build outputs are written below the ignored `artifacts/` directory. The helpers run tests,
+lint and formatting checks before packaging and never publish or install anything.
 
-## Windows build
+## Debian package (Linux Mint / Ubuntu, amd64)
 
-Use the existing development environment from README.md. Run `tools.render_probe` and `tools.playback_probe` first to generate synthetic validation fixtures. Cache the exact build and runtime wheels once (this preparation step uses the network):
+Install the normal development environment and the pinned packaging tools, then build:
 
-```powershell
-.\.venv\Scripts\python -m pip download --only-binary=:all: --dest artifacts/packaging/wheelhouse -r requirements-build.txt PySide6-Essentials==6.12.0 python-mpv==1.0.8 PyOpenGL==3.1.10 mutagen==1.47.0
-$env:AMP_MPV_DIR = (Resolve-Path artifacts/runtime/libmpv).Path
-.\.venv\Scripts\python -m tools.package_preview --wheelhouse artifacts/packaging/wheelhouse
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -e '.[dev]'
+.venv/bin/python -m pip install -r requirements-linux-build.txt
+.venv/bin/python tools/build_linux_deb.py --output artifacts/linux-deb
 ```
 
-The builder itself works offline. It runs the unit tests and source checks, creates an isolated build environment, builds an sdist and then a wheel from that sdist using pinned tooling, verifies all licence/notice bytes, and copies just the five runtime dependency wheels into a new output directory. It generates a SHA-256 requirements lock and installs it with `--no-index --require-hashes` in a fresh virtual environment. That environment contains neither the editable checkout nor Qt Addons, test tools or fixture generators. A standalone smoke test runs outside the checkout and exercises blank launch, image/video/music, independent windows, fullscreen/resize, viewport capture and clean shutdown. The package module path is checked to prove the installed copy was used.
+The result is `amp-media-player_<version>_amd64.deb`. Install it with:
 
-Results go into a new `artifacts/packaging/preview-<UTC timestamp>` directory. `--output <new directory>` selects another location; existing builds are never overwritten. Keep the wheelhouse if later offline builds are needed. Files of interest:
+```sh
+sudo apt install ./artifacts/linux-deb/amp-media-player_0.0.1_amd64.deb
+```
 
-- `dist/`: AMP source archive and wheel. The source archive contains tests, tools, docs, licence texts and product requirements; it excludes local media, virtual environments and Git internals.
-- `wheelhouse/` and `requirements-runtime.txt`: the exact platform-specific wheels and SHA-256 pins for offline installation.
-- `report.json`: artifact hashes, package licence metadata and embedded-notice inventory, smoke results and exact native runtime metadata/hash when available.
-- `smoke/`: synthetic image, captured PNG and standalone install report.
-- `build-env/` and `install-env/`: disposable local validation environments. They are not portable application bundles.
+The package installs a self-contained Python/Qt application under `/opt/amp`, an `amp`
+launcher under `/usr/bin`, an application icon, and a desktop entry. The desktop entry
+registers the supported image, video and audio MIME types so AMP appears in file-manager
+Open With menus. It deliberately does not replace existing default applications.
 
-Use `python -m venv <new environment>` and that environment's Python to install with `-m pip install --no-index --find-links <build>/wheelhouse --require-hashes -r <build>/requirements-runtime.txt`. Then set `AMP_MPV_DIR` to the separately installed DLL directory and launch with `python -m amp <local file>`. Keep the original dependency wheels with their embedded notices intact. Requirements include hashes for this wheelhouse/platform only; prepare and validate separate wheels on Linux.
+libmpv and graphics libraries remain distribution packages. This avoids bundling the
+host's FFmpeg/libmpv stack and lets the package manager apply system security updates.
 
-Build commands and dependency versions are repeatable. Per-build hashes identify the exact outputs; bit-for-bit reproducibility of all source archives is not claimed. The build requires the pinned wheel versions to remain available or be retained locally. No updater or package-download feature is added to AMP itself.
+## Windows installer
 
-## Remaining release gates
+Windows binaries must be built on a 64-bit Windows host; PyInstaller output is
+platform-specific and Inno Setup is a Windows compiler. Prepare the development environment
+as described in the README, set `AMP_MPV_DIR` to a validated directory containing
+`libmpv-2.dll`, and run:
 
-- Validate the actual Mint 22.3 desktop renderer and system libmpv build, then repeat source installation and functional checks there. Ubuntu unit-test CI does not cover this.
-- Validate a clean Windows machine without development runtimes; the fresh venv still uses this machine's Python, drivers and libmpv.
-- Complete exact native/transitive dependency and corresponding-source/build-configuration collection. Wheel licence metadata and an LGPL-labelled libmpv asset are inventory evidence, not a completed redistribution audit. No native runtime is copied into the package.
-- Resolve any packaging-specific driver/runtime discovery problems before choosing a frozen executable/installer. Include CPython notices if Python is embedded later.
-- Complete manual listening, native file-manager/picker/association and multi-monitor checks in TEST_MATRIX.md. Context-loss recovery remains unavailable; closing and opening another window is required if the GL context is destroyed.
+```powershell
+.\.venv\Scripts\python -m pip install -r requirements-build.txt
+.\.venv\Scripts\python tools\build_windows_preview.py `
+  --output artifacts\windows-build `
+  --iscc "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+```
 
-The existing runtime provenance and selected codecs are recorded in RENDERER_AND_PACKAGING.md and THIRD_PARTY_NOTICES.md. M9 remains partly implemented until its platform and distribution gates pass. See LICENSING.md for the existing release audit checklist. No release permission is implied by a successful local package build.
+The helper creates a PyInstaller one-folder bundle and, when `--iscc` is supplied, an Inno
+Setup installer. The installer offers an optional, unchecked per-user task to register AMP
+in Windows Open With without changing existing defaults.
 
-Packaging method references: [PyPA build tutorial](https://packaging.python.org/en/latest/tutorials/packaging-projects/), [pip download](https://pip.pypa.io/en/stable/cli/pip_download/), [pip hash checking](https://pip.pypa.io/en/stable/topics/secure-installs/).
+## Release checks
 
-
-## Standalone Windows / Inno preview
-
-The user selected a no-Python-setup standalone v1. A tested private PyInstaller one-folder bundle and Inno Setup installer now exist; use [RELEASE_READINESS.md](RELEASE_READINESS.md) for build commands, exact results and remaining release gates. The earlier wheel workflow above remains useful for source-package verification, but is not the final user installation experience. Linux standalone packaging must be built and validated on Linux.
+- Test install, Open With, playback and uninstall on a clean target system.
+- Preserve the bundled third-party notices and complete the native dependency/source audit.
+- Build Windows artifacts on Windows and Debian artifacts on the oldest supported Linux base.
+- Record the SHA-256 digest for every published installer.

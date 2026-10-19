@@ -97,6 +97,7 @@ class VideoControls(FloatingPanel):
     seek_requested = Signal(float, str)
     volume_requested = Signal(int)
     mute_requested = Signal(bool)
+    subtitles_requested = Signal(bool)
     speed_requested = Signal(float)
     previous_requested = Signal()
     next_requested = Signal()
@@ -185,6 +186,12 @@ class VideoControls(FloatingPanel):
         self.next.clicked.connect(self.next_requested)
         row.addWidget(self.next)
         row.addStretch()
+        self.subtitles = QToolButton()
+        configure_button(self.subtitles, "Show subtitles", "cc")
+        self.subtitles.setCheckable(True)
+        self.subtitles.hide()
+        self.subtitles.toggled.connect(self.subtitles_requested)
+        row.addWidget(self.subtitles)
         self.mute = QToolButton()
         configure_button(self.mute, "Mute", "volume")
         self.mute.setCheckable(True)
@@ -248,6 +255,17 @@ class VideoControls(FloatingPanel):
             with QSignalBlocker(self.mute):
                 self.mute.setChecked(bool(value))
             self._mute_icon(bool(value))
+        elif name == "track-list":
+            available = any(track.get("type") == "sub" for track in (value or []))
+            self.subtitles.setVisible(available)
+            if not available:
+                with QSignalBlocker(self.subtitles):
+                    self.subtitles.setChecked(False)
+        elif name == "sub-visibility" and value is not None:
+            with QSignalBlocker(self.subtitles):
+                self.subtitles.setChecked(bool(value))
+            self.subtitles.setToolTip("Hide subtitles" if value else "Show subtitles")
+            self.subtitles.setAccessibleName("Hide subtitles" if value else "Show subtitles")
         text = "Replay" if self.ended else "Play" if self.paused else "Pause"
         if self.play.text() != text:
             self.play.setText(text)

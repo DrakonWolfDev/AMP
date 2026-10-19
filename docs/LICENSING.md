@@ -1,8 +1,8 @@
 # AMP licensing policy
 
-AMP follows WolfLauncher's existing **AGPL-3.0-only** approach. WolfLauncher's local LICENSE, README and project metadata were checked; its exact unmodified AGPLv3 text is now AMP's LICENSE. AMP first-party code is Copyright © 2026 Andrew Hodgson trading as Wolf Forge. Contributions are accepted under the same licence unless separately agreed; retain third-party attribution.
+AMP is licensed under **AGPL-3.0-only**. AMP first-party code is Copyright © 2026 Andrew Hodgson trading as Wolf Forge. Contributions are accepted under the same licence unless separately agreed; retain third-party attribution.
 
-The GitHub repository remains private. Choosing an open-source licence does not itself publish the repository or authorize a release. For distribution, provide recipients the licence, applicable notices and corresponding source using a method permitted by the licence. Do not impose additional restrictions contradicting their licensed rights. AMP currently has no remote-service interface; if a modified version later supports remote network interaction, review AGPL section 13's source-offer requirements.
+For distribution, provide recipients the licence, applicable notices and corresponding source using a method permitted by the licence. Do not impose additional restrictions contradicting their licensed rights. AMP currently has no remote-service interface; if a modified version later supports remote network interaction, review AGPL section 13's source-offer requirements.
 
 ## Dependency approach
 

@@ -2,7 +2,7 @@
 
 2026-10-18 scope amendment: add local music to M4 using the existing per-window backend/transport and a filename view. M2 folder navigation now wraps at both ends with a three-second amber notice (M7); this supersedes earlier no-wrap acceptance criteria. Include music formats in sorting/filtering and validate mode switching, single-file behaviour, skipped files across the boundary, independent state and cleanup (M8). No automatic next-track playback or playlist management is introduced.
 
-The root AMP_ROADMAP.md is the product specification. CODEX_PROMPT.md provides the engineering contract. Preserve both as supplied.
+The root AMP_ROADMAP.md is the product specification.
 
 ## Sequence and acceptance
 
@@ -21,4 +21,4 @@ The root AMP_ROADMAP.md is the product specification. CODEX_PROMPT.md provides t
 
 M0 is mandatory before implementing the dependent UI. Check the binding against current upstream API documentation and selected versions before writing integration code. If M0 fails, record the evidence and smallest alternatives in TECHNICAL_RISKS.md; only continue independent work.
 
-Use small reviewable commits. Automated tests should cover transforms, folder filtering/ordering, capture paths/names/errors, keyboard routing and session isolation where meaningful. Platform/rendering claims require execution evidence. Publishing the private source repository does not authorize a release, tag, installer publication or deployment.
+Use small reviewable commits. Automated tests should cover transforms, folder filtering/ordering, capture paths/names/errors, keyboard routing and session isolation where meaningful. Platform/rendering claims require execution evidence. Source publication does not imply that binary release validation is complete.

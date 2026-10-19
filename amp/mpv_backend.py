@@ -16,6 +16,27 @@ from .music import read_music
 from .playback import seek_target
 
 
+def companion_subtitles(path):
+    """Return same-folder SRT files belonging to a video, exact name first."""
+    path = Path(path)
+    prefix = f"{path.stem}.".casefold()
+    try:
+        matches = [
+            candidate
+            for candidate in path.parent.iterdir()
+            if candidate.is_file()
+            and candidate.suffix.casefold() == ".srt"
+            and candidate.name.casefold().startswith(prefix)
+        ]
+    except OSError:
+        return []
+    exact = f"{path.stem}.srt".casefold()
+    return sorted(
+        matches,
+        key=lambda candidate: (candidate.name.casefold() != exact, candidate.name.casefold()),
+    )
+
+
 def load_binding():
     if os.name == "nt":
         directory = os.environ.get("AMP_MPV_DIR")
@@ -51,6 +72,8 @@ class MpvBackend(QObject):
         "idle-active",
         "eof-reached",
         "seekable",
+        "track-list",
+        "sub-visibility",
     )
 
     def __init__(self, parent=None):
@@ -126,13 +149,20 @@ class MpvBackend(QObject):
             if token is not None and not self.closed:
                 self.load_failed.emit(token, "This media could not be decoded.")
 
-    def load(self, path, token):
+    def load(self, path, token, *, subtitles=()):
         def perform():
             # loadfile returns before decoding finishes. Map the new playlist
             # entry, not a mutable current filename, to the caller's request.
             # The lock also covers errors arriving before the mapping is ready.
             with self._entry_lock:
                 self.player.command("loadfile", str(path), "replace")
+                for index, subtitle in enumerate(subtitles):
+                    self.player.command(
+                        "sub-add", str(subtitle), "select" if index == 0 else "auto"
+                    )
+                # Subtitle tracks remain attached and selectable, but every
+                # newly opened video starts with captions hidden.
+                self.player._set_property("sub-visibility", False)
                 for entry in self.player._get_property("playlist"):
                     self._entry_tokens[entry["id"]] = token
                 while len(self._entry_tokens) > 64:

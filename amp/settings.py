@@ -32,6 +32,7 @@ class Preferences:
         self.muted = str(self.store.value("muted", "false")).lower() == "true"
         self.volume = self._integer("default_volume", 100, 0, 100)
         self.banner_seconds = self._integer("banner_seconds", 3, 1, 10)
+        self.wheel_navigation = str(self.store.value("wheel_navigation", "false")).lower() == "true"
 
     def _integer(self, key, default, minimum, maximum):
         try:
@@ -46,14 +47,18 @@ class Preferences:
             raise OSError("Mute preference could not be saved. Check the local settings folder.")
         self.muted = bool(muted)
 
-    def save(self, repeat, volume, banner_seconds):
+    def save(self, repeat, volume, banner_seconds, wheel_navigation=None):
         self.store.setValue("repeat", bool(repeat))
         self.store.setValue("default_volume", volume)
         self.store.setValue("banner_seconds", banner_seconds)
+        if wheel_navigation is not None:
+            self.store.setValue("wheel_navigation", bool(wheel_navigation))
         self.store.sync()
         if self.store.status() != QSettings.Status.NoError:
             raise OSError("Preferences could not be saved. Check the local settings folder.")
         self.repeat, self.volume, self.banner_seconds = repeat, volume, banner_seconds
+        if wheel_navigation is not None:
+            self.wheel_navigation = bool(wheel_navigation)
 
 
 class SettingsDialog(ProjectDialog):
@@ -66,6 +71,14 @@ class SettingsDialog(ProjectDialog):
         self.repeat = QCheckBox("Repeat the current video or music file")
         self.repeat.setChecked(preferences.repeat)
         layout.addRow(self.repeat)
+        self.wheel_navigation = QCheckBox(
+            "Use the mouse wheel for previous / next; middle-click toggles zoom"
+        )
+        self.wheel_navigation.setChecked(preferences.wheel_navigation)
+        self.wheel_navigation.setToolTip(
+            "When enabled, wheel down opens the next file and wheel up opens the previous file."
+        )
+        layout.addRow(self.wheel_navigation)
         self.volume = QSpinBox()
         self.volume.setRange(0, 100)
         self.volume.setSuffix(" %")

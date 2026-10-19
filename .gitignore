@@ -23,4 +23,10 @@ Thumbs.db
 
 # Generated probe output and private media fixtures
 artifacts/
+graphify-out/
+*.deb
+*.exe
+*.AppImage
+*.pem
+*.key
 tests/fixtures/private/

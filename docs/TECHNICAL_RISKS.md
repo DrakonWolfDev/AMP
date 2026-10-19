@@ -1,6 +1,6 @@
 # Technical risks
 
-The Windows renderer baseline now runs successfully. See TEST_MATRIX.md and docs/evidence for measured results.
+The Windows renderer baseline now runs successfully. The reproducible desktop probes under `tools/` provide renderer validation.
 
 - Render API ownership/threading and cleanup were checked against downloaded libmpv headers and binding source. Qt owns the GL context; normal core commands run on a worker. Other drivers/platforms and long stress runs remain untested.
 - Qt grabFramebuffer can repaint; AMP reads the preserved existing FBO instead. Paused pixels match Qt capture and readback does not render a new frame. Exact OS compositor timing has not been externally compared.
