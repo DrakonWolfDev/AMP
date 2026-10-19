@@ -8,7 +8,7 @@ root = Path(SPECPATH).parents[1]
 runtime = Path(os.environ["AMP_MPV_DIR"])
 data = [(str(root / "LICENSE"), "."), (str(root / "THIRD_PARTY_NOTICES.md"), "."), (str(root / "LICENSES"), "LICENSES")]
 data += [(str(root / "amp/assets"), "amp/assets")]
-for name in ("andy-media-player", "PySide6-Essentials", "shiboken6", "python-mpv", "PyOpenGL", "mutagen"):
+for name in ("andy-media-player", "PySide6-Essentials", "shiboken6", "python-mpv", "PyOpenGL", "mutagen", "packaging"):
     data += copy_metadata(name)
 
 a = Analysis(

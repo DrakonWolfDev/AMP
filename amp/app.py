@@ -33,6 +33,7 @@ from .folder_browser import FolderBrowser
 from .folder_navigator import AUDIO_SUFFIXES, IMAGE_SUFFIXES, VIDEO_SUFFIXES, navigation_steps
 from .navigation import NavigationAttempt
 from .settings import Preferences, SettingsDialog
+from .update_feature import UpdateFeatureMixin
 from .viewport import MediaViewport
 
 
@@ -51,7 +52,7 @@ class MediaCanvas(QWidget):
         super().resizeEvent(event)
 
 
-class Window(QMainWindow):
+class Window(UpdateFeatureMixin, QMainWindow):
     def __init__(self, preferences=None):
         super().__init__()
         self.setWindowTitle("AMP")
@@ -114,7 +115,9 @@ class Window(QMainWindow):
         settings_action.setShortcut("Ctrl+,")
         self.addAction(settings_action)
         self.media_menu.addAction("Keyboard shortcuts", self.help)
+        self.media_menu.addAction("Check for updates", self.check_for_updates)
         self.media_menu.addAction("About AMP / licences", self.about)
+        self.setup_update_feature()
         self.viewport.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.viewport.customContextMenuRequested.connect(
             lambda point: self.media_menu.popup(self.viewport.mapToGlobal(point))
@@ -339,6 +342,7 @@ class Window(QMainWindow):
         HelpDialog(self).exec()
 
     def settings(self):
+        automatic_updates_were_enabled = self.preferences.auto_updates
         dialog = SettingsDialog(self.preferences, self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             try:
@@ -347,12 +351,15 @@ class Window(QMainWindow):
                     dialog.volume.value(),
                     dialog.banner.value(),
                     dialog.wheel_navigation.isChecked(),
+                    dialog.auto_updates.isChecked(),
                 )
                 self.viewport.set_wheel_navigation(self.preferences.wheel_navigation)
                 self.video_set("loop-file", "inf" if self.preferences.repeat else "no")
                 if self.loop_timer.isActive():
                     self.loop_timer.start(self.preferences.banner_seconds * 1000)
                 self.notify("Settings saved locally.")
+                if self.preferences.auto_updates and not automatic_updates_were_enabled:
+                    self.start_automatic_update_check()
             except OSError as error:
                 self.notify(str(error))
         self.chrome.reveal()
@@ -652,6 +659,7 @@ class Window(QMainWindow):
 
     def closeEvent(self, event):
         self.fullscreen_timer.stop()
+        self.stop_update_check()
         self.viewport.cleanup()
         event.accept()
 
@@ -680,6 +688,7 @@ def main():
     app = create_application()
     window = Window()
     window.show()
+    QTimer.singleShot(2000, window.start_automatic_update_check)
     if args.path:
         QTimer.singleShot(100, lambda: window.open_path(args.path))
     return app.exec()

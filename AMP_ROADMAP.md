@@ -11,6 +11,11 @@ Agreed additions implemented during UI review include local artwork/lyrics, vide
 
 Local **music file playback** is now part of v0.1, alongside images and video. M4 covers music autoplay, play/pause, seeking, duration, volume/mute and clean switching using the existing per-window libmpv backend. Offer a simple music/filename view; hide image/video-only actions. Test MP3, FLAC, WAV, Ogg/Vorbis, Opus, M4A/AAC, WMA and AIFF against the chosen runtime. No library, streaming, playlist management, automatic next-track playback or track-repeat feature is added.
 
+Future option: consider local M4B audiobook playback using the existing libmpv and Mutagen
+path. Basic playback, tags and cover art can be evaluated independently of audiobook-specific
+chapters, bookmarks and resume-position features. Do not support DRM circumvention, network
+catalogues or online metadata lookup.
+
 M2 now requires **circular folder navigation**: Right at the last supported file returns to the first; Left at the first returns to the last. Include supported images, videos and music in the same natural order. Display a prominent amber notice for three seconds identifying a return to the beginning or end; keep it outside screenshot content. A single-file folder stays on that file without restarting playback. Skip unreadable candidates at most once per navigation action; retain the wrap notice if unreadable files straddle the boundary. This explicitly replaces the earlier no-wrap requirement wherever stated below or in the original prompt. M7 covers the notice's visual treatment; M8 covers music independence and shutdown.
 
 ### 1. The idea
@@ -20,7 +25,7 @@ AMP is a small, fast, local **image and video viewer for Linux and Windows**. Op
 **The promise:** *The media is complicated enough. Viewing it shouldn’t be.*
 
 **Product rules**
-- Local-first, private by design. No account, telemetry, analytics, cloud service, network requests, advertising or forced updates.
+- Local-first, private by design. No account, telemetry, analytics, cloud media service, advertising or forced updates. Manual update checks may read public release metadata from GitHub; optional daily checks are disabled by default and require explicit confirmation. AMP never downloads or installs updates.
 - No collection, indexing, uploads, metadata database or whole-library scans. AMP views user-selected files and the current directory only.
 - No edits to source media. Zoom/pan are presentation-only; screenshots create separate PNG files.
 - Good defaults, minimal settings, no VLC-style maze of menus.

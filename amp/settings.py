@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QDialogButtonBox,
     QFormLayout,
+    QMessageBox,
     QSpinBox,
 )
 
@@ -33,6 +34,9 @@ class Preferences:
         self.volume = self._integer("default_volume", 100, 0, 100)
         self.banner_seconds = self._integer("banner_seconds", 3, 1, 10)
         self.wheel_navigation = str(self.store.value("wheel_navigation", "false")).lower() == "true"
+        self.auto_updates = str(self.store.value("auto_updates", "false")).lower() == "true"
+        self.update_last_successful_check = self.store.value("update_last_successful_check")
+        self.update_dismissed_version = self.store.value("update_dismissed_version")
 
     def _integer(self, key, default, minimum, maximum):
         try:
@@ -47,18 +51,31 @@ class Preferences:
             raise OSError("Mute preference could not be saved. Check the local settings folder.")
         self.muted = bool(muted)
 
-    def save(self, repeat, volume, banner_seconds, wheel_navigation=None):
+    def save(self, repeat, volume, banner_seconds, wheel_navigation=None, auto_updates=None):
         self.store.setValue("repeat", bool(repeat))
         self.store.setValue("default_volume", volume)
         self.store.setValue("banner_seconds", banner_seconds)
         if wheel_navigation is not None:
             self.store.setValue("wheel_navigation", bool(wheel_navigation))
+        if auto_updates is not None:
+            self.store.setValue("auto_updates", bool(auto_updates))
         self.store.sync()
         if self.store.status() != QSettings.Status.NoError:
             raise OSError("Preferences could not be saved. Check the local settings folder.")
         self.repeat, self.volume, self.banner_seconds = repeat, volume, banner_seconds
         if wheel_navigation is not None:
             self.wheel_navigation = bool(wheel_navigation)
+        if auto_updates is not None:
+            self.auto_updates = bool(auto_updates)
+
+    def save_update_state(self, last_successful_check, dismissed_version):
+        self.store.setValue("update_last_successful_check", last_successful_check)
+        self.store.setValue("update_dismissed_version", dismissed_version)
+        self.store.sync()
+        if self.store.status() != QSettings.Status.NoError:
+            raise OSError("Update-check state could not be saved.")
+        self.update_last_successful_check = last_successful_check
+        self.update_dismissed_version = dismissed_version
 
 
 class SettingsDialog(ProjectDialog):
@@ -79,6 +96,11 @@ class SettingsDialog(ProjectDialog):
             "When enabled, wheel down opens the next file and wheel up opens the previous file."
         )
         layout.addRow(self.wheel_navigation)
+        self.auto_updates = QCheckBox("Automatically check GitHub for AMP updates")
+        self.auto_updates.setChecked(preferences.auto_updates)
+        self.auto_updates.setToolTip("Disabled by default; checks public release information only.")
+        self.auto_updates.toggled.connect(self._confirm_auto_updates)
+        layout.addRow(self.auto_updates)
         self.volume = QSpinBox()
         self.volume.setRange(0, 100)
         self.volume.setSuffix(" %")
@@ -105,3 +127,18 @@ class SettingsDialog(ProjectDialog):
         )
         self.buttons.button(QDialogButtonBox.StandardButton.Save).setDefault(True)
         self.resize(self.width(), min(510, self.screen().availableGeometry().height() - 70))
+
+    def _confirm_auto_updates(self, enabled):
+        if not enabled:
+            return
+        answer = QMessageBox.question(
+            self,
+            "Enable automatic update checks?",
+            "If enabled, AMP will contact GitHub after startup at most once every 24 hours "
+            "to read public AMP release information. No media names, paths or usage data are "
+            "sent. AMP will never download or install updates automatically.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if answer == QMessageBox.StandardButton.No:
+            self.auto_updates.setChecked(False)

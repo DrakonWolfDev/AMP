@@ -77,7 +77,7 @@ video; use the CC button in the playback controls to show or hide them.
 | F / F11 / media double click | Toggle fullscreen |
 | Esc | Leave fullscreen |
 | Ctrl+N | Independent new window |
-| Three-dot menu / right click | New window, lyrics (music), Settings, keyboard help and licences |
+| Three-dot menu / right click | New window, lyrics (music), Settings, update check, keyboard help and licences |
 | Ctrl+, | Settings |
 
 Screenshots read the last rendered media framebuffer without advancing video, exclude the controls/title bar, include visible bars/crop, and use physical viewport pixels. Existing files are never overwritten. If saving fails, the capture stays in memory and S retries it; closing the window discards this in-memory retry. Source media is never changed.
@@ -145,7 +145,7 @@ The renderer probe generates synthetic local fixtures and PNGs in ignored `artif
 - [Technical risks](docs/TECHNICAL_RISKS.md): renderer gate and open decisions.
 - [Test matrix](docs/TEST_MATRIX.md): planned platform checks.
 
-The stack is Python, PySide6/Qt 6 Essentials, PyOpenGL for readback, Mutagen for local music tags, and python-mpv wrapping libmpv's OpenGL Render API. All media operations are local. mpv user configuration/scripts, external-file autoloading and reference following are disabled; FFmpeg protocols are restricted to local files. No network feature, analytics, database or background scan is implemented. No diagnostics log is written. Mute is remembered automatically when toggled; other preferences are stored when you save Settings, using Qt's local AppConfigLocation: `%LOCALAPPDATA%/AMP/AMP/preferences.ini` on Windows and `${XDG_CONFIG_HOME:-~/.config}/AMP/AMP/preferences.ini` on Linux. No media paths or playback history are stored. Delete this file while AMP is closed to restore defaults.
+The stack is Python, PySide6/Qt 6 Essentials, PyOpenGL for readback, Mutagen for local music tags, and python-mpv wrapping libmpv's OpenGL Render API. All media operations are local. mpv user configuration/scripts, external-file autoloading and reference following are disabled; FFmpeg protocols are restricted to local files. There is no analytics, database or background media scan. A manual update check contacts GitHub only when selected. Optional automatic checks are disabled by default and require confirmation; when enabled they read public AMP release metadata from GitHub at most once every 24 hours. AMP never sends media paths or usage data and never downloads or installs an update. No diagnostics log is written. Preferences are stored in Qt's local AppConfigLocation: `%LOCALAPPDATA%/AMP/AMP/preferences.ini` on Windows and `${XDG_CONFIG_HOME:-~/.config}/AMP/AMP/preferences.ini` on Linux. No media paths or playback history are stored. Delete this file while AMP is closed to restore defaults.
 
 AMP is licensed under the [GNU Affero General Public License, version 3 only](LICENSE) (`AGPL-3.0-only`). Copyright © 2026 Andrew Hodgson trading as Wolf Forge. Dependencies retain their own licences; see [third-party notices](THIRD_PARTY_NOTICES.md) and the [licensing policy](docs/LICENSING.md). Complete the binary/runtime redistribution audit before publishing binary releases.
 

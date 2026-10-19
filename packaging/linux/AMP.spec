@@ -16,6 +16,7 @@ for name in (
     "python-mpv",
     "PyOpenGL",
     "mutagen",
+    "packaging",
 ):
     data += copy_metadata(name)
 

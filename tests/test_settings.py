@@ -8,11 +8,23 @@ def test_preferences_default_and_round_trip(tmp_path):
     preferences = Preferences(path)
     assert (preferences.repeat, preferences.volume, preferences.banner_seconds) == (False, 100, 3)
     assert not preferences.wheel_navigation
+    assert not preferences.auto_updates
     assert not path.exists()
-    preferences.save(True, 25, 5, True)
+    preferences.save(True, 25, 5, True, True)
     restored = Preferences(path)
     assert (restored.repeat, restored.volume, restored.banner_seconds) == (True, 25, 5)
     assert restored.wheel_navigation
+    assert restored.auto_updates
+
+
+def test_update_state_round_trip_without_enabling_network_checks(tmp_path):
+    path = tmp_path / "settings.ini"
+    preferences = Preferences(path)
+    preferences.save_update_state("2026-10-19T12:00:00+00:00", "1.2.3")
+    restored = Preferences(path)
+    assert not restored.auto_updates
+    assert restored.update_last_successful_check == "2026-10-19T12:00:00+00:00"
+    assert restored.update_dismissed_version == "1.2.3"
 
 
 def test_preferences_handle_invalid_local_values(tmp_path):
