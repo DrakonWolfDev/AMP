@@ -6,6 +6,7 @@ from PySide6.QtGui import QHelpEvent
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QMainWindow, QToolButton, QWidget
 
+from amp import app as app_module
 from amp.app import Window
 from amp.chrome import QuietControls
 from amp.settings import Preferences
@@ -63,4 +64,21 @@ def test_fullscreen_hover_hint_is_a_child_widget_not_a_native_popup(application,
     assert window.hover_hint.isHidden()
     # Release away from the button so this test never requests fullscreen.
     QTest.mouseRelease(button, Qt.MouseButton.LeftButton, pos=QPoint(-10, -10))
+    window.close()
+
+
+def test_fullscreen_applies_compositing_on_entry_and_after_settling(
+    application, tmp_path, monkeypatch
+):
+    calls = []
+    monkeypatch.setattr(
+        app_module, "enable_fullscreen_compositing", lambda window: calls.append(window.isFullScreen())
+    )
+    window = Window(Preferences(tmp_path / "settings.ini"))
+    window.set_fullscreen(True)
+    assert calls == [True]
+    window._finish_fullscreen()
+    assert calls == [True, True]
+    window.set_fullscreen(False)
+    assert not window.isFullScreen()
     window.close()

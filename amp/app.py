@@ -35,6 +35,7 @@ from .navigation import NavigationAttempt
 from .settings import Preferences, SettingsDialog
 from .update_feature import UpdateFeatureMixin
 from .viewport import MediaViewport
+from .windows import enable_fullscreen_compositing
 
 
 class MediaCanvas(QWidget):
@@ -647,6 +648,7 @@ class Window(UpdateFeatureMixin, QMainWindow):
         if fullscreen:
             self.fullscreen_was_maximized = self.isMaximized()
             self.showFullScreen()
+            enable_fullscreen_compositing(self)
         elif self.fullscreen_was_maximized:
             self.showMaximized()
         else:
@@ -654,6 +656,8 @@ class Window(UpdateFeatureMixin, QMainWindow):
         self.chrome.reveal()
 
     def _finish_fullscreen(self):
+        # Native state/geometry changes may replace the style set on entry.
+        enable_fullscreen_compositing(self)
         self.position_overlays()
         self.viewport.update()
 
