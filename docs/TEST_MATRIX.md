@@ -18,7 +18,7 @@ Validation: 90 unit tests and lint/format pass. A new 21-check hover probe passe
 
 ## v1 readiness and standalone Windows build - 2026-10-18
 
-The Windows build uses PyInstaller and Inno Setup. The helper validates the compiler, runs quality checks, freezes the app, preserves Python/freezer notices, excludes unused Qt PDF/Multimedia and development FFmpeg, smoke-tests the executable, then compiles and hashes the installer. Nothing is installed or published automatically.
+The Windows build uses PyInstaller and Inno Setup. The helper requires an explicit compiler path, runs quality checks, freezes the app, preserves Python/freezer notices, excludes unused Qt PDF/Multimedia and development FFmpeg, smoke-tests the executable, then compiles and hashes the installer. CI installs the pinned Inno Setup version through Chocolatey. Nothing is installed or published automatically.
 
 The bundle passed all 13 media/GL/independence/shutdown smoke checks during development. Actual install/upgrade/uninstall and clean Windows validation remain pending.
 

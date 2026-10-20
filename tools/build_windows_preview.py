@@ -35,11 +35,8 @@ def main():
     runtime = Path(os.environ.get("AMP_MPV_DIR", root / "artifacts/runtime/libmpv")).resolve()
     if not (runtime / "libmpv-2.dll").is_file():
         parser.error("Set AMP_MPV_DIR to the validated libmpv DLL directory.")
-    if (
-        args.iscc
-        and digest(args.iscc) != "0a8757031b33777e4c9cbffee40f11a5062b36d25cbe144c1db73b6102b80ad7"
-    ):
-        parser.error("Compiler hash differs from the validated Inno Setup 6.7.3 compiler.")
+    if args.iscc and not args.iscc.is_file():
+        parser.error("The supplied Inno Setup compiler does not exist.")
     output.mkdir(parents=True)
     report = {"passed": False, "published": False, "release_ready": False, "checks": []}
     environment = os.environ.copy()
