@@ -25,7 +25,7 @@ AMP's own code is Copyright © 2026 Andrew Hodgson trading as Wolf Forge, licens
 
 - Use: local video/music decoding, playback and OpenGL rendering.
 - Source: https://github.com/mpv-player/mpv and https://ffmpeg.org/
-- Development build: `mpv v0.41.0-dev-gfffe7a23a`, official x86_64 Windows asset labelled LGPL. Exact asset/hash: docs/RENDERER_AND_PACKAGING.md.
+- Packaging setup: official x86_64 Windows asset labelled LGPL, currently `mpv v0.41.0-dev-g6a262d11f`. Exact asset/hash: docs/RENDERER_AND_PACKAGING.md. Manual playback evidence was collected with the preceding `gfffe7a23a` build.
 - Archive licence preserved at LICENSES/libmpv-LICENSE.LGPL. It contains LGPL 2.1 terms. mpv and FFmpeg licences depend on build configuration and linked dependencies; the archive label alone does not settle the complete dependency inventory or patent rights.
 - The 2026-10-18 audit found embedded FFmpeg library notices identifying **LGPL version 3 or later**, consistent with `--enable-version3`. The inspected configuration has no `--enable-gpl` or `--enable-nonfree`; x264/x265 encoders are disabled, while H.264/HEVC decoders remain present. Preserve LGPLv3/GPLv3 terms and the exact corresponding source, not only the archive's LGPL 2.1 file.
 - Before distributing binaries: archive the exact corresponding source/configuration/patches and third-party notices; verify all linked components and satisfy their applicable source/replacement obligations.

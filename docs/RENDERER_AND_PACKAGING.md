@@ -29,10 +29,10 @@ M5/M6 track the media request and physical size last painted into the FBO and re
 ## Local Windows runtime
 
 - Official repository: https://github.com/mpv-player/mpv
-- Asset: `libmpv-v0.41.0-dev-gfffe7a23a-39086651352-x86_64-w64-mingw32-lgpl.zip`
-- Source revision: `fffe7a23a` (as identified by runtime/asset).
-- SHA-256: `9eda5c48918422bf28e211240b9010687f05e239c086d568aa86cc851a80fa6a`
-- Runtime reports `mpv v0.41.0-dev-gfffe7a23a`.
+- Asset: `libmpv-v0.41.0-dev-g6a262d11f-39135297726-x86_64-w64-mingw32-lgpl.zip`
+- Source revision: `6a262d11f` (as identified by runtime/asset).
+- SHA-256: `f3a6d4bc4571fd02cd229cd30077d45deba699b1cf75a9a6fc4b707833ad1120`
+- The setup pin was refreshed on 2026-10-20 because the upstream `git-release` is rolling and removed the previously validated asset. The last manually tested Windows runtime reported `mpv v0.41.0-dev-gfffe7a23a`; the replacement must still pass the packaged desktop acceptance run.
 - Archive comes from the upstream rolling `git-release`; the exact URL is in `tools/setup_windows.ps1`. If removed upstream, setup fails rather than silently selecting an unverified runtime. Retain the verified local archive or deliberately choose and validate a replacement.
 
 The archive contains headers and LICENSE.LGPL. It is a development dependency under ignored artifacts, not a released AMP bundle. Synthetic fixtures are produced by imageio-ffmpeg 0.6.0's development-only executable, not used by AMP for playback or screenshots.

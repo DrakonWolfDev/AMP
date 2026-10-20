@@ -10,12 +10,12 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Python dependency installation failed.' }
     $runtimeDirectory = Join-Path $projectRoot 'artifacts/runtime'
     New-Item -ItemType Directory -Force -Path $runtimeDirectory | Out-Null
-    $archivePath = Join-Path $runtimeDirectory 'libmpv-v0.41.0-dev-gfffe7a23a-39086651352-x86_64-w64-mingw32-lgpl.zip'
-    $runtimeUrl = 'https://github.com/mpv-player/mpv/releases/download/git-release/libmpv-v0.41.0-dev-gfffe7a23a-39086651352-x86_64-w64-mingw32-lgpl.zip'
+    $archivePath = Join-Path $runtimeDirectory 'libmpv-v0.41.0-dev-g6a262d11f-39135297726-x86_64-w64-mingw32-lgpl.zip'
+    $runtimeUrl = 'https://github.com/mpv-player/mpv/releases/download/git-release/libmpv-v0.41.0-dev-g6a262d11f-39135297726-x86_64-w64-mingw32-lgpl.zip'
     if (-not (Test-Path -LiteralPath $archivePath)) {
         Invoke-WebRequest -Uri $runtimeUrl -OutFile $archivePath
     }
-    $expectedHash = '9EDA5C48918422BF28E211240B9010687F05E239C086D568AA86CC851A80FA6A'
+    $expectedHash = 'F3A6D4BC4571FD02CD229CD30077D45DEBA699B1CF75A9A6FC4B707833AD1120'
     if ((Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash -ne $expectedHash) {
         throw 'libmpv archive checksum mismatch. Do not use this runtime.'
     }
