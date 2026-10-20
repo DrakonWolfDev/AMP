@@ -47,13 +47,14 @@ def neighbours(current, direction):
         yield step.path
 
 
-def navigation_steps(current, direction):
+def navigation_steps(current, direction, suffixes=None):
     """Retain a deleted current file as anchor and report a crossed boundary."""
     current = Path(current)
+    suffixes = SUPPORTED_SUFFIXES if suffixes is None else suffixes
     entries = [
         entry
         for entry in current.parent.iterdir()
-        if entry.is_file() and entry.suffix.lower() in SUPPORTED_SUFFIXES
+        if entry.is_file() and entry.suffix.lower() in suffixes
     ]
     if current not in entries:
         entries.append(current)

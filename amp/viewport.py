@@ -27,6 +27,7 @@ class MediaViewport(QOpenGLWidget):
     wheel_mode_changed = Signal(bool)
     video_changed = Signal(str, object)
     media_failed = Signal(str)
+    playback_ended = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -71,6 +72,7 @@ class MediaViewport(QOpenGLWidget):
         backend.load_failed.connect(self._load_failed)
         backend.load_ready.connect(self._load_ready)
         backend.music_ready.connect(self._music_ready)
+        backend.playback_ended.connect(self._playback_ended)
         self.makeCurrent()
         try:
             # Keep this ctypes callback alive for the entire render context lifetime.
@@ -122,6 +124,11 @@ class MediaViewport(QOpenGLWidget):
     def _load_failed(self, token, message):
         if not self.closed and token == self.load_serial and self.playable:
             self.media_failed.emit(message)
+
+    @Slot(int)
+    def _playback_ended(self, token):
+        if not self.closed and token == self.load_serial and self.playable:
+            self.playback_ended.emit()
 
     @Slot(int, object)
     def _load_ready(self, token, values):
@@ -187,7 +194,6 @@ class MediaViewport(QOpenGLWidget):
         self.backend.set("vid", "auto")
         self.transform.media_width, self.transform.media_height = 1, 1
         self.reset()
-        self.backend.set("pause", False)
         self.backend.load(
             path,
             self.load_serial,
@@ -211,7 +217,6 @@ class MediaViewport(QOpenGLWidget):
         self.reset()
         # Decode embedded artwork as a bounded still image, never as video playback.
         self.backend.set("vid", "no")
-        self.backend.set("pause", False)
         self.backend.load(path, self.load_serial)
         self.backend.read_music(path, self.load_serial)
         self.update()

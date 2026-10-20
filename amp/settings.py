@@ -29,7 +29,9 @@ class Preferences:
             / "preferences.ini"
         )
         self.store = QSettings(str(self.path), QSettings.Format.IniFormat)
-        self.repeat = str(self.store.value("repeat", "false")).lower() == "true"
+        legacy_repeat = str(self.store.value("repeat", "false")).lower() == "true"
+        self.repeat_video = self._boolean("repeat_video", legacy_repeat)
+        self.repeat_music = self._boolean("repeat_music", legacy_repeat)
         self.muted = str(self.store.value("muted", "false")).lower() == "true"
         self.volume = self._integer("default_volume", 100, 0, 100)
         self.banner_seconds = self._integer("banner_seconds", 3, 1, 10)
@@ -44,6 +46,9 @@ class Preferences:
         except (ValueError, TypeError, OverflowError):
             return default
 
+    def _boolean(self, key, default=False):
+        return str(self.store.value(key, str(default).lower())).lower() == "true"
+
     def save_mute(self, muted):
         self.store.setValue("muted", bool(muted))
         self.store.sync()
@@ -51,8 +56,17 @@ class Preferences:
             raise OSError("Mute preference could not be saved. Check the local settings folder.")
         self.muted = bool(muted)
 
-    def save(self, repeat, volume, banner_seconds, wheel_navigation=None, auto_updates=None):
-        self.store.setValue("repeat", bool(repeat))
+    def save(
+        self,
+        repeat_video,
+        repeat_music,
+        volume,
+        banner_seconds,
+        wheel_navigation=None,
+        auto_updates=None,
+    ):
+        self.store.setValue("repeat_video", bool(repeat_video))
+        self.store.setValue("repeat_music", bool(repeat_music))
         self.store.setValue("default_volume", volume)
         self.store.setValue("banner_seconds", banner_seconds)
         if wheel_navigation is not None:
@@ -62,7 +76,8 @@ class Preferences:
         self.store.sync()
         if self.store.status() != QSettings.Status.NoError:
             raise OSError("Preferences could not be saved. Check the local settings folder.")
-        self.repeat, self.volume, self.banner_seconds = repeat, volume, banner_seconds
+        self.repeat_video, self.repeat_music = bool(repeat_video), bool(repeat_music)
+        self.volume, self.banner_seconds = volume, banner_seconds
         if wheel_navigation is not None:
             self.wheel_navigation = bool(wheel_navigation)
         if auto_updates is not None:
@@ -85,9 +100,12 @@ class SettingsDialog(ProjectDialog):
         layout.setVerticalSpacing(18)
         self.content.addWidget(label("PLAYBACK", "dialogEyebrow"))
         self.content.addLayout(layout)
-        self.repeat = QCheckBox("Repeat the current video or music file")
-        self.repeat.setChecked(preferences.repeat)
-        layout.addRow(self.repeat)
+        self.repeat_video = QCheckBox("Repeat the current video")
+        self.repeat_video.setChecked(preferences.repeat_video)
+        layout.addRow(self.repeat_video)
+        self.repeat_music = QCheckBox("Repeat the current music track")
+        self.repeat_music.setChecked(preferences.repeat_music)
+        layout.addRow(self.repeat_music)
         self.wheel_navigation = QCheckBox(
             "Use the mouse wheel for previous / next; middle-click toggles zoom"
         )
@@ -116,7 +134,7 @@ class SettingsDialog(ProjectDialog):
         self.banner.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.PlusMinus)
         layout.addRow("Folder wrap notice", self.banner)
         note = label(
-            "Repeat applies to this window now and to new windows.\n"
+            "Repeat choices apply to this window now and to new windows.\n"
             "Other open windows keep their current playback and preferences.",
             "dialogNote",
         )

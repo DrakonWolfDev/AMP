@@ -4,6 +4,8 @@
 
 The root AMP_ROADMAP.md is the product specification.
 
+2026-10-20 amendment: natural music EOF advances to the next music file in the folder, while video retains Replay behaviour. Video and music repeat are stored separately.
+
 ## Sequence and acceptance
 
 | Stage | Planned code/work | Verification | Principal risk |

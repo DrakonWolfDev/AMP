@@ -52,6 +52,7 @@ def test_backend_attaches_first_subtitle_and_keeps_other_tracks_available():
 
     assert backend.player.commands == [
         ("loadfile", "Film.mkv", "replace"),
+        ("set-property", "pause", False),
         ("sub-add", "Film.srt", "select"),
         ("sub-add", "Film.en.srt", "auto"),
         ("set-property", "sub-visibility", False),

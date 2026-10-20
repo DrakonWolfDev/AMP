@@ -7,6 +7,8 @@ The next target is a standalone v1 that does not require users to install Python
 
 Agreed additions implemented during UI review include local artwork/lyrics, video speed, remembered mute, the explicit single-folder browser, compact menus and branded dialogs. Explicit Website/GitHub links open the system browser only when activated; AMP does not fetch them or perform automatic lookups. No further feature expansion is required for this readiness review.
 
+2026-10-20 playback update: music now advances to the next music file in the folder at natural EOF. Video and music repeat are independent settings; both remain off by default. This supersedes the earlier no-automatic-advance and single-repeat requirements below.
+
 ### Scope update — 2026-10-18
 
 Local **music file playback** is now part of v0.1, alongside images and video. M4 covers music autoplay, play/pause, seeking, duration, volume/mute and clean switching using the existing per-window libmpv backend. Offer a simple music/filename view; hide image/video-only actions. Test MP3, FLAC, WAV, Ogg/Vorbis, Opus, M4A/AAC, WMA and AIFF against the chosen runtime. No library, streaming, playlist management, automatic next-track playback or track-repeat feature is added.

@@ -90,7 +90,9 @@ def main():
 
     try:
         preferences = Preferences(output / "unused-preferences.ini")
-        preferences.repeat, preferences.volume = False, 0
+        preferences.repeat_video = False
+        preferences.repeat_music = False
+        preferences.volume = 0
         first = Window(preferences)
         windows.append(first)
         first.controls.volume.setValue(0)

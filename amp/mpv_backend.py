@@ -61,6 +61,7 @@ class MpvBackend(QObject):
     load_failed = Signal(int, str)
     load_ready = Signal(int, object)
     music_ready = Signal(int, object)
+    playback_ended = Signal(int)
     observed_properties = (
         "time-pos",
         "duration",
@@ -118,8 +119,17 @@ class MpvBackend(QObject):
             raise
 
     def _observed(self, name, value):
-        if not self.closed:
-            self.changed.emit(name, value)
+        if self.closed:
+            return
+        self.changed.emit(name, value)
+        # keep_open leaves the current entry loaded at natural EOF, so mpv does
+        # not send end-file until that entry is replaced or the core shuts down.
+        # Correlate eof-reached with the active entry while it is still current.
+        if name == "eof-reached" and value:
+            with self._entry_lock:
+                token = self._entry_tokens.get(self._active_entry)
+            if token is not None and not self.closed:
+                self.playback_ended.emit(token)
 
     def _started(self, event):
         self._active_entry = event.data.playlist_entry_id
@@ -143,11 +153,14 @@ class MpvBackend(QObject):
         self.submit(refresh)
 
     def _ended(self, event):
-        if not self.closed and event.data.reason == self.binding.MpvEventEndFile.ERROR:
-            with self._entry_lock:
-                token = self._entry_tokens.pop(event.data.playlist_entry_id, None)
-            if token is not None and not self.closed:
-                self.load_failed.emit(token, "This media could not be decoded.")
+        with self._entry_lock:
+            token = self._entry_tokens.pop(event.data.playlist_entry_id, None)
+        if token is None or self.closed:
+            return
+        if event.data.reason == self.binding.MpvEventEndFile.ERROR:
+            self.load_failed.emit(token, "This media could not be decoded.")
+        elif event.data.reason == self.binding.MpvEventEndFile.EOF:
+            self.playback_ended.emit(token)
 
     def load(self, path, token, *, subtitles=()):
         def perform():
@@ -156,6 +169,9 @@ class MpvBackend(QObject):
             # The lock also covers errors arriving before the mapping is ready.
             with self._entry_lock:
                 self.player.command("loadfile", str(path), "replace")
+                # Natural EOF with keep_open sets pause=True. Apply autoplay
+                # after replacement so that state cannot pause the new file.
+                self.player._set_property("pause", False)
                 for index, subtitle in enumerate(subtitles):
                     self.player.command(
                         "sub-add", str(subtitle), "select" if index == 0 else "auto"

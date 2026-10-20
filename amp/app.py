@@ -76,6 +76,7 @@ class Window(UpdateFeatureMixin, QMainWindow):
         self.setCentralWidget(body)
         self.viewport.failed.connect(self.notify)
         self.viewport.media_failed.connect(self.media_failed)
+        self.viewport.playback_ended.connect(self.playback_ended)
         self.viewport.fullscreen_requested.connect(self.toggle_fullscreen)
         self.viewport.navigation_requested.connect(self.navigate)
         self.viewport.wheel_mode_changed.connect(self.wheel_mode_changed)
@@ -351,14 +352,20 @@ class Window(UpdateFeatureMixin, QMainWindow):
         if dialog.exec() == QDialog.DialogCode.Accepted:
             try:
                 self.preferences.save(
-                    dialog.repeat.isChecked(),
+                    dialog.repeat_video.isChecked(),
+                    dialog.repeat_music.isChecked(),
                     dialog.volume.value(),
                     dialog.banner.value(),
                     dialog.wheel_navigation.isChecked(),
                     dialog.auto_updates.isChecked(),
                 )
                 self.viewport.set_wheel_navigation(self.preferences.wheel_navigation)
-                self.video_set("loop-file", "inf" if self.preferences.repeat else "no")
+                repeat = (
+                    self.preferences.repeat_music
+                    if self.viewport.audio
+                    else self.preferences.repeat_video
+                )
+                self.video_set("loop-file", "inf" if repeat else "no")
                 if self.loop_timer.isActive():
                     self.loop_timer.start(self.preferences.banner_seconds * 1000)
                 self.notify("Settings saved locally.")
@@ -412,10 +419,12 @@ class Window(UpdateFeatureMixin, QMainWindow):
             path = Path(path).expanduser().resolve()
             if not path.is_file():
                 raise RuntimeError("The selected local file is unavailable.")
+            is_music = path.suffix.lower() in AUDIO_SUFFIXES
+            repeat = self.preferences.repeat_music if is_music else self.preferences.repeat_video
             playback_options = {
                 "volume": self.controls.volume_level,
                 "mute": self.controls.mute.isChecked(),
-                "loop-file": "inf" if self.preferences.repeat else "no",
+                "loop-file": "inf" if repeat else "no",
                 "speed": 1.0,
             }
             if path.suffix.lower() in IMAGE_SUFFIXES:
@@ -568,6 +577,18 @@ class Window(UpdateFeatureMixin, QMainWindow):
             self._continue_navigation()
         else:
             self.notify(f"{message} Use Left/Right or open another local file.")
+
+    def playback_ended(self):
+        if not self.viewport.audio or self.preferences.repeat_music or self.current_path is None:
+            return
+        try:
+            self.navigation_attempt = NavigationAttempt(
+                list(navigation_steps(self.current_path, 1, AUDIO_SUFFIXES)), 1
+            )
+            self._continue_navigation()
+        except OSError:
+            self.navigation_attempt = None
+            self.notify("This folder is unavailable. Open another local file.")
 
     def set_muted(self, muted):
         self.video_set("mute", muted)

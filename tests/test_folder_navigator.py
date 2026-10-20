@@ -43,3 +43,10 @@ def test_single_file_does_not_restart_itself(tmp_path):
     path.touch()
     assert list(neighbours(path, 1)) == []
     assert list(neighbours(path, -1)) == []
+
+
+def test_suffix_filter_keeps_music_advance_on_audio_files(tmp_path):
+    for name in ("track1.mp3", "cover.jpg", "track2.flac", "clip.mp4"):
+        (tmp_path / name).touch()
+    steps = list(navigation_steps(tmp_path / "track1.mp3", 1, {".mp3", ".flac"}))
+    assert [step.path.name for step in steps] == ["track2.flac"]
