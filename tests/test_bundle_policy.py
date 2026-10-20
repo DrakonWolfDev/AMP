@@ -11,6 +11,7 @@ def test_rejects_unused_pyopengl_native_helpers_on_both_path_styles():
 def test_rejects_unused_media_and_development_payloads():
     assert forbidden_runtime_file("_internal/PySide6/plugins/ffmpegmediaplugin.dll")
     assert forbidden_runtime_file("_internal/amp_runtime/libmpv-2.dll")
+    assert not forbidden_runtime_file("_internal/LICENSES/libmpv-LICENSE.LGPL")
     assert forbidden_runtime_file("_internal/PySide6/avutil-61.dll")
     assert forbidden_runtime_file("_internal/PySide6/swresample-6.dll")
     assert forbidden_runtime_file("_internal/PySide6/swscale-10.dll")

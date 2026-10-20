@@ -11,12 +11,12 @@ def forbidden_runtime_file(path):
     return (
         path.suffix.casefold() == ".jar"
         or "/opengl/dlls/" in normalized
+        or (filename.startswith("libmpv") and path.suffix.casefold() in {".dll", ".so"})
         or any(
             marker in filename
             for marker in (
                 "ffmpeg-win",
                 "qt6pdf",
-                "libmpv",
                 "avcodec-",
                 "avformat-",
                 "avutil-",
