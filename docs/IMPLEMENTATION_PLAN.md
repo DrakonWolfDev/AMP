@@ -1,5 +1,9 @@
 # Implementation plan
 
+2026-10-20 platform amendment: Linux retains distribution-managed libmpv. Windows playback is
+implemented through Qt's native Media Foundation backend using `QVideoSink`; the Windows bundle
+must reject libmpv and FFmpeg. Earlier Windows libmpv steps below are historical.
+
 2026-10-18 scope amendment: add local music to M4 using the existing per-window backend/transport and a filename view. M2 folder navigation now wraps at both ends with a three-second amber notice (M7); this supersedes earlier no-wrap acceptance criteria. Include music formats in sorting/filtering and validate mode switching, single-file behaviour, skipped files across the boundary, independent state and cleanup (M8). No automatic next-track playback or playlist management is introduced.
 
 The root AMP_ROADMAP.md is the product specification.

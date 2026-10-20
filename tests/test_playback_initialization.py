@@ -19,12 +19,14 @@ def test_window_preferences_reach_core_before_autoplay_load(method):
         update=Mock(),
         music_view=Mock(),
         _stop_image_movie=Mock(),
+        _clear_subtitles=Mock(),
+        subtitle_track=None,
     )
     path = Path("chosen-media.mp4")
     method(viewport, path, playback_options={"volume": 17, "mute": True, "loop-file": "inf"})
     calls = backend.method_calls
     expected_load = (
-        call.load(path, 1, subtitles=[])
+        call.load(path, 1, subtitles=())
         if method is MediaViewport.open_video
         else call.load(path, 1)
     )

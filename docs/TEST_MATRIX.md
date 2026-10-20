@@ -1,5 +1,9 @@
 # Test matrix — 2026-10-20
 
+> Windows playback has changed from bundled libmpv to Qt's native Media Foundation backend.
+> Windows results below describe the former renderer unless explicitly rerun and marked as Media
+> Foundation evidence. A new installer and full desktop acceptance pass are required before release.
+
 ## Linux package, animated GIF and Trash validation — 2026-10-20
 
 The current source passes 108 unit tests plus Ruff lint/format. The amd64 Debian builder passes its tests, freeze and `dpkg-deb` gates. Manual Mint testing confirmed package install, uninstall and reinstall; animated GIF playback; confirmation and restoration-safe Trash handling; and automatic display of the next naturally sorted image after deletion. A native Linux OpenGL probe also exercised the real `QFile.moveToTrash()` call and verified that the framebuffer changed to the next image. This exposed and fixed a PySide Linux binding difference where the static method returns a boolean despite its stub advertising a tuple.

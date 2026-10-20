@@ -464,7 +464,9 @@ class Window(UpdateFeatureMixin, QMainWindow):
             self.controls.update_property("time-pos", 0)
             self.controls.update_property("eof-reached", False)
             self.controls.update_property("pause", False)
-            self.controls.update_property("track-list", [])
+            self.controls.update_property(
+                "track-list", [{"type": "sub"}] if self.viewport.subtitle_track else []
+            )
             self.controls.update_property("sub-visibility", False)
             self.open_media_button.setChecked(False)
             self.chrome.reveal()
@@ -599,7 +601,10 @@ class Window(UpdateFeatureMixin, QMainWindow):
 
     def video_set(self, name, value):
         if self.viewport.playable and self.viewport.backend:
-            self.viewport.backend.set(name, value)
+            if name == "sub-visibility":
+                self.viewport.set_subtitles_visible(value)
+            else:
+                self.viewport.backend.set(name, value)
 
     def pause(self):
         if self.viewport.playable and self.viewport.backend:

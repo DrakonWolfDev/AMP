@@ -7,9 +7,9 @@ For distribution, provide recipients the licence, applicable notices and corresp
 ## Dependency approach
 
 - Keep dependencies under their original licences, recorded in THIRD_PARTY_NOTICES.md and preserved under LICENSES. The whole application licence does not relabel third-party code.
-- Prefer the audited LGPL libmpv/FFmpeg route where practical. Check GPL versions/compatibility for system Linux packages rather than assuming every mpv/FFmpeg build is equivalent. Avoid non-redistributable/nonfree combinations in any distributed binary.
+- Check GPL versions/compatibility for system Linux packages rather than assuming every mpv/FFmpeg build is equivalent. Avoid non-redistributable/nonfree combinations in any distributed binary.
 - Use distro-managed libmpv on Linux initially; validate the actual decoder set and exact build licence. AMP does not automatically use arbitrary GStreamer or OS codec plugins.
-- On Windows, the current backend uses libmpv/FFmpeg, not Windows Media Foundation. OS codec extensions do not automatically become AMP decoder licences or capabilities.
+- On Windows, use Qt Multimedia's native Media Foundation backend. The bundle policy rejects libmpv, FFmpeg libraries and Qt's FFmpeg media plugin. Codec availability remains dependent on Windows and installed system extensions.
 - Software-licence compliance and codec-patent rights are separate. An open-source decoder or system package is not a universal patent grant. HEIC/HEVC and other patent-sensitive additions need a separate distribution assessment; no blanket patent clearance is claimed.
 
 ## Before a binary release (M9)
@@ -20,6 +20,11 @@ For distribution, provide recipients the licence, applicable notices and corresp
 4. Check selected GPL/LGPL versions and all dependencies for compatibility. Do not copy system codec DLLs into an installer merely because they are installed on the developer's machine.
 5. Review codec-patent requirements for the intended territories/distribution, then test clean Windows/Mint installations. Record gaps rather than claiming that an LGPL-labelled DLL or an AGPL project automatically clears them.
 
-The 2026-10-20 frozen-bundle findings and remaining blockers are recorded in `CODEC_AUDIT.md`. The builders preserve CPython/PyInstaller notices and reject known unused media/PDF runtimes, but exact Qt and Windows libmpv/FFmpeg corresponding-source packages and transitive notices remain unfinished. No public binary release, tag or deployment is authorized by this audit.
+The 2026-10-20 frozen-bundle findings and remaining blockers are recorded in `CODEC_AUDIT.md`.
+Pinned source inputs and the release-bundle procedure are recorded in
+`legal/source-manifest.json` and `SOURCE_DELIVERY.md`. The builders preserve CPython/PyInstaller
+notices and reject known unused media/PDF runtimes. The Qt Base, SVG, Wayland and Multimedia
+source sets are pinned and mapped. A Windows package must still pass its inventory gate and
+clean-machine Media Foundation playback tests before publication is approved.
 
 References: [AGPLv3](https://www.gnu.org/licenses/agpl-3.0.html), [Qt licensing](https://doc.qt.io/qt-6/licensing.html), [mpv Copyright](https://github.com/mpv-player/mpv/blob/master/Copyright), [FFmpeg legal guidance](https://ffmpeg.org/legal.html).

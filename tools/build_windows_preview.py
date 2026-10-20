@@ -34,15 +34,12 @@ def main():
     output = args.output.resolve()
     if output.exists():
         parser.error("Choose a new output directory; existing builds are never overwritten.")
-    runtime = Path(os.environ.get("AMP_MPV_DIR", root / "artifacts/runtime/libmpv")).resolve()
-    if not (runtime / "libmpv-2.dll").is_file():
-        parser.error("Set AMP_MPV_DIR to the validated libmpv DLL directory.")
     if args.iscc and not args.iscc.is_file():
         parser.error("The supplied Inno Setup compiler does not exist.")
     output.mkdir(parents=True)
     report = {"passed": False, "published": False, "release_ready": False, "checks": []}
     environment = os.environ.copy()
-    environment["AMP_MPV_DIR"] = str(runtime)
+    environment["QT_MEDIA_BACKEND"] = "windows"
 
     def run(arguments, name, *, cwd=root, env=environment):
         result = subprocess.run(
@@ -104,6 +101,7 @@ def main():
             smoke_env = os.environ.copy()
             for key in ("AMP_MPV_DIR", "PYTHONPATH", "PYTHONHOME"):
                 smoke_env.pop(key, None)
+            smoke_env["QT_MEDIA_BACKEND"] = "windows"
             smoke_env["PATH"] = str(Path(os.environ.get("SYSTEMROOT", "C:/Windows")) / "System32")
             smoke = output / "smoke"
             smoke.mkdir()

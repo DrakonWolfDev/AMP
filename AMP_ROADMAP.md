@@ -1,6 +1,10 @@
 # AMP — Andy’s Media Player
 ## Product roadmap | v1 readiness (original v0.1 milestones retained below)
 
+2026-10-20 playback amendment: Linux retains distribution-managed libmpv. Windows now uses Qt's
+native Media Foundation backend and must not bundle libmpv or FFmpeg. Earlier Windows libmpv
+milestones remain historical evidence and require a new Media Foundation acceptance pass.
+
 ### Delivery decision - 2026-10-18
 
 The next target is a standalone v1 that does not require users to install Python. Windows packaging uses PyInstaller plus Inno Setup, and Linux packaging uses PyInstaller plus Debian packaging. OS file-association integration on both platforms preserves existing defaults until the user explicitly chooses AMP.

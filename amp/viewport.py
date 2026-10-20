@@ -7,14 +7,15 @@ import ctypes
 
 from OpenGL import GL
 from OpenGL.error import GLError
-from PySide6.QtCore import QRectF, Qt, Signal, Slot
-from PySide6.QtGui import QImage, QMovie, QPainter
+from PySide6.QtCore import QRect, QRectF, Qt, Signal, Slot
+from PySide6.QtGui import QColor, QFont, QImage, QMovie, QPainter
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
 from .image_backend import read_image
-from .mpv_backend import MpvBackend, companion_subtitles
+from .mpv_backend import companion_subtitles, create_backend
 from .music import Music
 from .music_view import MusicView
+from .subtitles import read_srt
 from .view_transform import ViewTransform
 
 
@@ -33,6 +34,10 @@ class MediaViewport(QOpenGLWidget):
         super().__init__(parent)
         self.transform = ViewTransform()
         self.image = QImage()
+        self.video_frame = QImage()
+        self.subtitle_track = None
+        self.subtitle_visible = False
+        self.subtitle_text = ""
         self.image_movie = None
         self.backend = None
         self.renderer = None
@@ -62,17 +67,21 @@ class MediaViewport(QOpenGLWidget):
         self.ready.emit()
 
     def ensure_video(self):
-        if self.renderer:
+        if self.backend:
             return
         if not self.initialized:
             raise RuntimeError("The OpenGL viewport is not ready yet. Try opening again.")
-        backend = MpvBackend(self)
+        backend = create_backend(self)
         backend.changed.connect(self._property)
         backend.failed.connect(self.failed)
         backend.load_failed.connect(self._load_failed)
         backend.load_ready.connect(self._load_ready)
         backend.music_ready.connect(self._music_ready)
         backend.playback_ended.connect(self._playback_ended)
+        if hasattr(backend, "frame_ready"):
+            backend.frame_ready.connect(self._video_frame_ready)
+            self.backend = backend
+            return
         self.makeCurrent()
         try:
             # Keep this ctypes callback alive for the entire render context lifetime.
@@ -93,6 +102,12 @@ class MediaViewport(QOpenGLWidget):
         finally:
             self.doneCurrent()
 
+    @Slot(object)
+    def _video_frame_ready(self, image):
+        if not self.closed and self.video:
+            self.video_frame = image
+            self.render_requested.emit()
+
     @Slot(str, object)
     def _property(self, name, value):
         if self.closed:
@@ -104,7 +119,16 @@ class MediaViewport(QOpenGLWidget):
             if self.video and self.backend:
                 self.backend.refresh_video(self.load_serial)
             return
+        if name == "track-list" and self.subtitle_track:
+            value = list(value or []) + [{"type": "sub", "external": True}]
+        elif name == "sub-visibility" and self.subtitle_track:
+            value = self.subtitle_visible
         self.video_changed.emit(name, value)
+        if name == "time-pos" and self.video and self.subtitle_track:
+            text = self.subtitle_track.text_at(value)
+            if text != self.subtitle_text:
+                self.subtitle_text = text
+                self.update()
         if name == "time-pos" and self.audio:
             previous = self.music_view.music.lyrics.current(self.music_view.position)
             self.music_view.position = value or 0
@@ -153,6 +177,7 @@ class MediaViewport(QOpenGLWidget):
             self.backend.command("stop")
         self.video = False
         self.audio = False
+        self._clear_subtitles()
         self.image = image
         self.transform.media_width, self.transform.media_height = image.width(), image.height()
         self.reset()
@@ -189,15 +214,24 @@ class MediaViewport(QOpenGLWidget):
             self.backend.set(name, value)
         self.load_serial += 1
         self.image = QImage()
+        self.video_frame = QImage()
         self.video = True
         self.audio = False
+        subtitles = companion_subtitles(path)
+        self._clear_subtitles()
+        if subtitles:
+            try:
+                track = read_srt(subtitles[0])
+                self.subtitle_track = track if track else None
+            except OSError:
+                self.subtitle_track = None
         self.backend.set("vid", "auto")
         self.transform.media_width, self.transform.media_height = 1, 1
         self.reset()
         self.backend.load(
             path,
             self.load_serial,
-            subtitles=companion_subtitles(path),
+            subtitles=(),
         )
 
     @property
@@ -211,7 +245,9 @@ class MediaViewport(QOpenGLWidget):
             self.backend.set(name, value)
         self.load_serial += 1
         self.image = QImage()
+        self.video_frame = QImage()
         self.video, self.audio = False, True
+        self._clear_subtitles()
         self.audio_name = path.name
         self.music_view.set_music(Music(title=path.stem))
         self.reset()
@@ -228,7 +264,9 @@ class MediaViewport(QOpenGLWidget):
             self.backend.command("stop")
         self.video = False
         self.audio = False
+        self._clear_subtitles()
         self.image = QImage()
+        self.video_frame = QImage()
         self.transform.media_width = 1
         self.transform.media_height = 1
         self.reset()
@@ -254,6 +292,12 @@ class MediaViewport(QOpenGLWidget):
                 },
             )
             self.render_count += 1
+        elif self.video and not self.video_frame.isNull():
+            painter = QPainter(self)
+            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+            painter.drawImage(QRectF(*self.transform.rect), self.video_frame)
+            painter.end()
+            self.render_count += 1
         elif not self.image.isNull():
             painter = QPainter(self)
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
@@ -265,8 +309,55 @@ class MediaViewport(QOpenGLWidget):
             self.music_view.paint(painter, self.width(), self.height())
             painter.end()
 
+        if self.video and self.subtitle_visible and self.subtitle_text:
+            self._paint_subtitle()
+
         self.rendered_serial = self.load_serial
         self.rendered_size = (width, height)
+
+    def _paint_subtitle(self):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        font = QFont(painter.font())
+        font.setPixelSize(max(17, min(38, self.height() // 18)))
+        font.setWeight(QFont.Weight.Medium)
+        painter.setFont(font)
+        flags = int(Qt.AlignmentFlag.AlignHCenter | Qt.TextFlag.TextWordWrap)
+        width = max(120, min(round(self.width() * 0.84), 1000))
+        metrics = painter.fontMetrics()
+        measured = metrics.boundingRect(
+            QRect(0, 0, width, self.height()), flags, self.subtitle_text
+        )
+        padding_x, padding_y = 12, 7
+        media = QRectF(*self.transform.rect).intersected(QRectF(self.rect()))
+        bottom = min(self.height() - 16, media.bottom() - max(12, round(self.height() * 0.035)))
+        box = QRectF(
+            (self.width() - measured.width()) / 2 - padding_x,
+            bottom - measured.height() - padding_y * 2,
+            measured.width() + padding_x * 2,
+            measured.height() + padding_y * 2,
+        )
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(0, 0, 0, 190))
+        painter.drawRoundedRect(box, 5, 5)
+        painter.setPen(QColor("#ffffff"))
+        painter.drawText(
+            box.adjusted(padding_x, padding_y, -padding_x, -padding_y), flags, self.subtitle_text
+        )
+        painter.end()
+
+    def _clear_subtitles(self):
+        self.subtitle_track = None
+        self.subtitle_visible = False
+        self.subtitle_text = ""
+
+    def set_subtitles_visible(self, visible):
+        if self.subtitle_track:
+            self.subtitle_visible = bool(visible)
+            self.video_changed.emit("sub-visibility", self.subtitle_visible)
+            self.update()
+        elif self.backend:
+            self.backend.set("sub-visibility", visible)
 
     def framebuffer_internal_format(self):
         """Describe Qt's current colour attachment accurately to libmpv."""
@@ -315,7 +406,7 @@ class MediaViewport(QOpenGLWidget):
         self.apply_transform()
 
     def apply_transform(self):
-        if self.video and self.backend:
+        if self.video and self.backend and self.renderer:
             zoom, x, y = self.transform.mpv_options
             self.backend.set("video-zoom", zoom)
             self.backend.set("video-pan-x", x)

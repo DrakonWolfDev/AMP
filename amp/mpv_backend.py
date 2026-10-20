@@ -5,7 +5,6 @@
 
 import importlib
 import os
-import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from threading import Lock
@@ -14,6 +13,19 @@ from PySide6.QtCore import QObject, Signal
 
 from .music import read_music
 from .playback import seek_target
+
+
+def create_backend(parent=None):
+    """Use the OS media stack on Windows and distro libmpv elsewhere."""
+    if os.name == "nt":
+        try:
+            from .media_foundation_backend import MediaFoundationBackend
+        except (ImportError, OSError) as error:
+            raise RuntimeError(
+                "Windows Media Foundation support is missing from this installation."
+            ) from error
+        return MediaFoundationBackend(parent)
+    return MpvBackend(parent)
 
 
 def companion_subtitles(path):
@@ -38,19 +50,12 @@ def companion_subtitles(path):
 
 
 def load_binding():
-    if os.name == "nt":
-        directory = os.environ.get("AMP_MPV_DIR")
-        if not directory and getattr(sys, "frozen", False):
-            directory = str(Path(sys._MEIPASS) / "amp_runtime")
-        if directory:
-            directory = str(Path(directory).resolve())
-            os.environ["PATH"] = directory + os.pathsep + os.environ.get("PATH", "")
     try:
         return importlib.import_module("mpv")
     except (ImportError, OSError) as error:
         raise RuntimeError(
-            "Music and video need libmpv. On Windows set AMP_MPV_DIR to the folder containing "
-            "libmpv-2.dll; on Linux install libmpv (for Mint: sudo apt install libmpv2). "
+            "Music and video need libmpv. On Linux install libmpv "
+            "(for Mint: sudo apt install libmpv2). "
             "Images still work without it."
         ) from error
 

@@ -37,6 +37,7 @@ jobs:
             echo "Tag $TAG does not match project version $version." >&2
             exit 1
           }
+          python tools/source_compliance.py --check-ready
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
   linux:
@@ -71,7 +72,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install application and validated libmpv runtime
+      - name: Install application with Windows Media Foundation backend
         shell: powershell
         run: ./tools/setup_windows.ps1
       - name: Install pinned build dependencies
@@ -111,8 +112,12 @@ jobs:
         run: |
           test -f "release/AMP-${VERSION}-setup.exe"
           test -f "release/amp-media-player_${VERSION}_amd64.deb"
-          git archive --format=tar.gz --prefix="AMP-${VERSION}/" -o "release/AMP-${VERSION}-source.tar.gz" HEAD
-          (cd release && sha256sum * > SHA256SUMS.txt && sha256sum --check SHA256SUMS.txt)
+          python tools/source_compliance.py --check-ready
+          python tools/source_compliance.py --download "release/AMP-${VERSION}-corresponding-source"
+          git archive --format=tar.gz --prefix="AMP-${VERSION}/" -o "release/AMP-${VERSION}-corresponding-source/AMP-${VERSION}-project-source.tar.gz" HEAD
+          cp docs/SOURCE_DELIVERY.md "release/AMP-${VERSION}-corresponding-source/"
+          tar -czf "release/AMP-${VERSION}-source.tar.gz" -C release "AMP-${VERSION}-corresponding-source"
+          (cd release && sha256sum "AMP-${VERSION}-setup.exe" "amp-media-player_${VERSION}_amd64.deb" "AMP-${VERSION}-source.tar.gz" > SHA256SUMS.txt && sha256sum --check SHA256SUMS.txt)
       - name: Publish GitHub prerelease
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:

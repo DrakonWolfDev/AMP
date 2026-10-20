@@ -14,16 +14,13 @@ powershell -ExecutionPolicy Bypass -File tools/setup_windows.ps1
 .\AMP.cmd "C:\path\to\media.mp4"
 ```
 
-Setup creates `.venv`, installs the pinned Python dependencies, and downloads an official LGPL libmpv development build into ignored `artifacts/runtime`. Its archive SHA-256 is checked before extraction. It changes no system settings. The upstream rolling asset may eventually be removed; if download fails, see [runtime notes](docs/RENDERER_AND_PACKAGING.md).
-
-With another compatible libmpv installation, set `AMP_MPV_DIR` to its DLL directory. The underlying launch command is:
+Setup creates `.venv` and installs the pinned Python dependencies. Windows video and audio
+playback use the operating system's Media Foundation codecs; AMP does not download or bundle
+libmpv or FFmpeg. The underlying launch command is:
 
 ```powershell
-$env:AMP_MPV_DIR = (Resolve-Path artifacts/runtime/libmpv).Path
 .\.venv\Scripts\python -m amp
 ```
-
-Images can open without libmpv; opening video without the runtime shows installation guidance in the status bar.
 
 ## Install on Linux Mint
 
@@ -58,11 +55,13 @@ Images: PNG, JPEG/JPG/JFIF, BMP, WebP, animated GIF, and TIFF/TIF (first page). 
 
 Video extensions accepted: MP4, MKV, WebM, MOV, AVI, M4V, MPG/MPEG, WMV, TS, MTS and M2TS. Tested samples include H.264/AAC MP4 and transport streams, H.264 MKV, silent MKV, VP9 WebM and WMV2/WMA WMV. Extensions identify containers, not a guarantee that every codec/profile inside them will decode on every runtime.
 
-For local subtitles, place a matching SRT file beside the video. `Film.srt`, `Film.en.srt`
+For local subtitles place a matching SRT file beside the video. `Film.srt`, `Film.en.srt`
 and similar `Film.<label>.srt` names are attached when `Film.mkv` (or another supported video)
 opens. The exact-name subtitle is selected first. AMP checks only that folder and matching basename;
 recursive and general external-file autoloading remain disabled. Subtitles start hidden for each
-video; use the CC button in the playback controls to show or hide them.
+video; use the CC button in the playback controls to show or hide them. AMP parses and renders the
+selected SRT itself on both Linux and Windows, including it in viewport screenshots. UTF-8,
+BOM-marked UTF-16, multiline cues and plain rendering of basic SRT markup are supported.
 
 | Input | Action |
 | --- | --- |
@@ -85,7 +84,7 @@ Screenshots read the last rendered media framebuffer without advancing video, ex
 
 During a media/viewport update, capture waits for a valid rendered frame by reporting that the view is updating; press S again in a moment. A capture that failed before readback does not claim to retain a frame. Partial disk writes are reported as failures, with partial files removed where possible. If a PNG save failed after capture, retry preserves that exact earlier frame even after you open another file.
 
-Music uses the same playback/seek/volume controls, with local artwork, lyrics and a decorated title view. Screenshots and reset-fit are disabled in music mode. MP3, FLAC, WAV, Ogg/Vorbis, Opus, M4A/AAC, WMA and AIFF decoding were exercised with synthetic fixtures on the local runtime; codec support depends on the installed libmpv build. By default AMP opens the next music track in the folder at a track's end. Folder wrapping works in both directions, skips unreadable files, and does not restart a lone file. Tests ran at zero volume; audible output remains a manual listening check.
+Music uses the same playback/seek/volume controls, with local artwork, lyrics and a decorated title view. Screenshots and reset-fit are disabled in music mode. Codec support depends on the Linux distribution's libmpv build or the codecs available through Windows Media Foundation. By default AMP opens the next music track in the folder at a track's end. Folder wrapping works in both directions, skips unreadable files, and does not restart a lone file. Tests ran at zero volume; audible output remains a manual listening check.
 
 The timeline supports direct click-to-seek and dragging across its full height, including near either end. Video stops at natural EOF and shows **Replay**; music advances to the next track unless music repeat is enabled. Video repeat and music repeat are separate and off by default.
 
@@ -93,7 +92,7 @@ At the end of a video the transport shows **Replay**; clicking it or pressing Sp
 
 ## Status and limitations
 
-Real GL probes on Windows passed image and H.264 video capture, transforms, seek/resize/switch/shutdown at 100%, native 125%, and 150% effective Qt scaling. Linux Mint testing covers images, animated GIFs, video, music, subtitles, local/NAS media, PipeWire audio, Trash navigation and Debian install/uninstall. Human testing on Linux and Windows confirmed audible playback, fullscreen and moving AMP between monitors with different scaling. Automatic graphics-context recovery and native assistive-technology testing remain open.
+The earlier libmpv Windows build passed image and H.264 video capture, transforms, seek/resize/switch/shutdown at 100%, native 125%, and 150% effective Qt scaling. Those Windows checks must now be repeated for the Media Foundation replacement before release. Linux Mint testing covers images, animated GIFs, video, music, subtitles, local/NAS media, PipeWire audio, Trash navigation and Debian install/uninstall. Automatic graphics-context recovery and native assistive-technology testing remain open.
 
 ### Offline music artwork and lyrics
 
@@ -115,7 +114,7 @@ The media fills the canvas. Small floating icon controls and the filename fade a
 .\.venv\Scripts\python -m pytest -q
 .\.venv\Scripts\python -m ruff check amp tools tests
 .\.venv\Scripts\python -m ruff format --check amp tools tests
-# Requires a visible Windows desktop and AMP_MPV_DIR, plus dev dependencies:
+# Requires a visible Windows desktop and dev dependencies:
 .\.venv\Scripts\python -m tools.render_probe
 .\.venv\Scripts\python -m tools.session_probe
 .\.venv\Scripts\python -m tools.music_probe
@@ -148,9 +147,9 @@ The manually triggered **Package previews** GitHub Actions workflow builds an am
 - [Technical risks](docs/TECHNICAL_RISKS.md): renderer gate and open decisions.
 - [Test matrix](docs/TEST_MATRIX.md): planned platform checks.
 
-The stack is Python, PySide6/Qt 6 Essentials, PyOpenGL for readback, Mutagen for local music tags, and python-mpv wrapping libmpv's OpenGL Render API. All media operations are local. mpv user configuration/scripts, external-file autoloading and reference following are disabled; FFmpeg protocols are restricted to local files. There is no analytics, database or background media scan. A manual update check contacts GitHub only when selected. Optional automatic checks are disabled by default and require confirmation; when enabled they read public AMP release metadata from GitHub at most once every 24 hours. AMP never sends media paths or usage data and never downloads or installs an update. No diagnostics log is written. Preferences are stored in Qt's local AppConfigLocation: `%LOCALAPPDATA%/AMP/AMP/preferences.ini` on Windows and `${XDG_CONFIG_HOME:-~/.config}/AMP/AMP/preferences.ini` on Linux. No media paths or playback history are stored. Delete this file while AMP is closed to restore defaults.
+The stack is Python, PySide6/Qt 6, PyOpenGL for readback and Mutagen for local music tags. Windows uses Qt's native Media Foundation backend; Linux uses python-mpv with the distribution's libmpv. All media operations are local. There is no analytics, database or background media scan. A manual update check contacts GitHub only when selected. Optional automatic checks are disabled by default and require confirmation; when enabled they read public AMP release metadata from GitHub at most once every 24 hours. AMP never sends media paths or usage data and never downloads or installs an update. No diagnostics log is written. Preferences are stored in Qt's local AppConfigLocation: `%LOCALAPPDATA%/AMP/AMP/preferences.ini` on Windows and `${XDG_CONFIG_HOME:-~/.config}/AMP/AMP/preferences.ini` on Linux. No media paths or playback history are stored. Delete this file while AMP is closed to restore defaults.
 
-AMP is licensed under the [GNU Affero General Public License, version 3 only](LICENSE) (`AGPL-3.0-only`). Copyright © 2026 Andrew Hodgson trading as Wolf Forge. Dependencies retain their own licences; see [third-party notices](THIRD_PARTY_NOTICES.md), the [codec and bundle audit](docs/CODEC_AUDIT.md), and the [licensing policy](docs/LICENSING.md). Public binary release remains blocked until exact corresponding-source archives and complete Qt/libmpv/FFmpeg transitive notices are prepared; the audit is not legal advice or patent clearance.
+AMP is licensed under the [GNU Affero General Public License, version 3 only](LICENSE) (`AGPL-3.0-only`). Copyright © 2026 Andrew Hodgson trading as Wolf Forge. Dependencies retain their own licences; see [third-party notices](THIRD_PARTY_NOTICES.md), the [codec and bundle audit](docs/CODEC_AUDIT.md), the [Qt redistribution record](docs/QT_REDISTRIBUTION.md), the [source-delivery plan](docs/SOURCE_DELIVERY.md), and the [licensing policy](docs/LICENSING.md). The Windows bundle excludes libmpv, FFmpeg and Qt's FFmpeg media plugin; corresponding Qt sources are pinned. The audit is not legal advice or patent clearance. Version 0.8b is intentionally unsigned and must be distributed with published SHA-256 checksums.
 
 
 ### OS file associations

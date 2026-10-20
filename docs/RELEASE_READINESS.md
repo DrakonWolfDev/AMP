@@ -18,8 +18,12 @@ redistribution review described in `docs/LICENSING.md`.
 
 - PyInstaller and Inno Setup definitions are present and the installer registers optional,
   per-user Open With handlers without taking over defaults.
-- Build on 64-bit Windows with the pinned requirements and a validated libmpv runtime.
-- Audible playback, fullscreen and monitor/scaling transitions have been confirmed manually.
+- Build on 64-bit Windows with the pinned requirements. Playback uses the native Media Foundation
+  Qt backend; the bundle gate rejects libmpv and FFmpeg payloads.
+- The earlier libmpv build passed audible playback, fullscreen and monitor/scaling tests. Repeat
+  those tests against the replacement Media Foundation build.
+- The earlier preview installer was reported working for installation and uninstall. Re-test the
+  rebuilt package because its multimedia runtime has changed.
 - Validate the GitHub-built installer on a clean Windows system: install, upgrade, optional
   Open With registration, playback, uninstall and preservation of unrelated file handlers.
 
@@ -49,8 +53,9 @@ redistribution review described in `docs/LICENSING.md`.
 
 ## Before publishing binaries
 
-- Complete the exact native/transitive dependency, notice and corresponding-source inventory;
-  see `CODEC_AUDIT.md` for the current blockers.
+- Verify the exact generated inventory contains the native Windows Qt multimedia plugin and no
+  libmpv or FFmpeg payload; see `CODEC_AUDIT.md` and `SOURCE_DELIVERY.md`.
 - Exercise the final GitHub artifacts' supported formats and GPU rendering on each clean target.
-- Confirm installer signatures/hashes and retain build logs for the released artifacts.
+- Version 0.8b will remain unsigned by decision. Label it clearly, publish SHA-256 hashes and
+  retain build logs for the released artifacts.
 - Keep generated packages, machine reports, local media and credentials out of Git.

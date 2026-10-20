@@ -16,11 +16,17 @@ def forbidden_runtime_file(path):
             for marker in (
                 "ffmpeg-win",
                 "qt6pdf",
-                "qt6multimedia",
+                "libmpv",
                 "avcodec-",
                 "avformat-",
+                "avutil-",
                 "libavcodec",
                 "libavformat",
+                "libavutil",
+                "swresample-",
+                "swscale-",
+                "libswresample",
+                "libswscale",
                 "ffmpegmediaplugin",
             )
         )

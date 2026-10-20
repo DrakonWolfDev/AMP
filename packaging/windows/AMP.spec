@@ -1,23 +1,21 @@
 # Windows one-folder application bundle.
-import os
 from pathlib import Path
 
 from PyInstaller.utils.hooks import copy_metadata
 
 root = Path(SPECPATH).parents[1]
-runtime = Path(os.environ["AMP_MPV_DIR"])
 data = [(str(root / "LICENSE"), "."), (str(root / "THIRD_PARTY_NOTICES.md"), "."), (str(root / "LICENSES"), "LICENSES")]
 data += [(str(root / "amp/assets"), "amp/assets")]
-for name in ("andy-media-player", "PySide6-Essentials", "shiboken6", "python-mpv", "PyOpenGL", "mutagen", "packaging"):
+for name in ("andy-media-player", "PySide6-Essentials", "PySide6-Addons", "shiboken6", "PyOpenGL", "mutagen", "packaging"):
     data += copy_metadata(name)
 
 a = Analysis(
     [str(root / "packaging/windows/entry.py")],
     pathex=[str(root)],
-    binaries=[(str(runtime / "libmpv-2.dll"), "amp_runtime")],
+    binaries=[],
     datas=data,
-    hiddenimports=["mpv", "OpenGL.platform.win32"],
-    excludes=["PySide6.QtMultimedia", "PySide6.QtPdf", "PySide6.QtPdfWidgets", "PySide6.QtQml", "PySide6.QtQuick", "tkinter", "PIL", "pytest", "imageio_ffmpeg", "numpy"],
+    hiddenimports=["PySide6.QtMultimedia", "OpenGL.platform.win32"],
+    excludes=["mpv", "PySide6.QtMultimediaWidgets", "PySide6.QtPdf", "PySide6.QtPdfWidgets", "PySide6.QtQml", "PySide6.QtQuick", "tkinter", "PIL", "pytest", "imageio_ffmpeg", "numpy"],
 )
 # Qt's GUI hook collects every image plugin, including unused PDF support, and
 # PyOpenGL collects legacy GLUT/GLE DLLs which AMP does not call. Exclude those

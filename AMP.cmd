@@ -6,7 +6,6 @@ if not exist ".venv\Scripts\python.exe" (
   popd
   exit /b 1
 )
-if not defined AMP_MPV_DIR set "AMP_MPV_DIR=%~dp0artifacts\runtime\libmpv"
 ".venv\Scripts\python.exe" -m amp %*
 set "AMP_EXIT=%ERRORLEVEL%"
 popd

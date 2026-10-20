@@ -1,10 +1,8 @@
 """Standalone installed-wheel smoke test using runtime dependencies only."""
 
 import argparse
-import hashlib
 import importlib.metadata
 import json
-import os
 import platform
 import sys
 import threading
@@ -61,6 +59,14 @@ def main():
     def core(window, names):
         backend = window.viewport.backend
 
+        if not hasattr(backend, "worker"):
+            values = {
+                "pause": backend.player.playbackState()
+                != backend.player.PlaybackState.PlayingState,
+                "time-pos": backend.player.position() / 1000,
+            }
+            return {name: values.get(name) for name in names}
+
         def read():
             result = {}
             for name in names:
@@ -78,21 +84,19 @@ def main():
         wait(300)
         check(first.viewport.isValid(), "Blank installed application creates a valid GL viewport")
         package_names = {name.lower().replace("_", "-") for name, _ in report["packages"]}
+        required_packages = {
+            "andy-media-player",
+            "pyside6-essentials",
+            "shiboken6",
+            "pyopengl",
+            "mutagen",
+        }
+        required_packages.add("pyside6-addons" if sys.platform == "win32" else "python-mpv")
         check(
-            getattr(sys, "frozen", False)
-            or package_names
-            == {
-                "pip",
-                "andy-media-player",
-                "pyside6-essentials",
-                "shiboken6",
-                "python-mpv",
-                "pyopengl",
-                "mutagen",
-            },
+            getattr(sys, "frozen", False) or required_packages <= package_names,
             "Frozen executable carries runtime package metadata"
             if getattr(sys, "frozen", False)
-            else "Fresh environment contains only pip, AMP and five runtime distributions",
+            else "Fresh environment contains AMP's platform runtime distributions",
         )
         image = QImage(300, 500, QImage.Format.Format_RGB32)
         image.fill(QColor("#337788"))
@@ -112,7 +116,7 @@ def main():
         wait(900)
         check(
             first.viewport.render_count > 3 and second.viewport.render_count > 3,
-            "Minimal runtime renders two live videos without Qt Addons",
+            "Minimal runtime renders two live videos",
         )
         first.pause()
         first.seek(2, "absolute")
@@ -130,10 +134,7 @@ def main():
         wait(200)
         path = save_capture(first.viewport.capture(), output / "captures")
         check(path.is_file(), "Installed viewport capture survives zoom/fullscreen/resize")
-        report["runtime"] = core(first, ("mpv-version", "ffmpeg-version", "mpv-configuration"))
-        dll = Path(os.environ.get("AMP_MPV_DIR", "")) / "libmpv-2.dll"
-        if dll.is_file():
-            report["libmpv_sha256"] = hashlib.sha256(dll.read_bytes()).hexdigest()
+        report["runtime"] = first.viewport.backend.version
         check(first.open_path(args.music), "Installed wheel opens local music")
         wait(400)
         check(

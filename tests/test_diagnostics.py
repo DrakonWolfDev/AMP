@@ -8,5 +8,5 @@ def test_missing_runtime_is_actionable(monkeypatch):
         raise OSError("missing DLL")
 
     monkeypatch.setattr("amp.mpv_backend.importlib.import_module", missing)
-    with pytest.raises(RuntimeError, match="AMP_MPV_DIR"):
+    with pytest.raises(RuntimeError, match="install libmpv"):
         load_binding()

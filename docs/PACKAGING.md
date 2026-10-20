@@ -32,8 +32,7 @@ host's FFmpeg/libmpv stack and lets the package manager apply system security up
 
 Windows binaries must be built on a 64-bit Windows host; PyInstaller output is
 platform-specific and Inno Setup is a Windows compiler. Prepare the development environment
-as described in the README, set `AMP_MPV_DIR` to a validated directory containing
-`libmpv-2.dll`, and run:
+as described in the README, then run:
 
 ```powershell
 .\.venv\Scripts\python -m pip install -r requirements-build.txt
@@ -44,7 +43,8 @@ as described in the README, set `AMP_MPV_DIR` to a validated directory containin
 
 The helper creates a PyInstaller one-folder bundle and, when `--iscc` is supplied, an Inno
 Setup installer. The installer offers an optional, unchecked per-user task to register AMP
-in Windows Open With without changing existing defaults.
+in Windows Open With without changing existing defaults. Its playback runtime is Qt Multimedia's
+native Windows Media Foundation plugin. The build rejects libmpv, FFmpeg DLLs and Qt's FFmpeg plugin.
 
 ## Release checks
 
