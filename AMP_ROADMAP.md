@@ -134,7 +134,7 @@ Agreed small local settings screen: repeat-current-file toggle (separate from ci
 
 ### 6. Explicitly later, not v0.1
 
-Per-file remembered crop/zoom, animated image playback, advanced subtitle/audio track controls, rotation, edit/export, media libraries, playlists, tagging, transcoding, Jellyfin/Audiobookshelf/Spotify connections, streaming, mobile versions, cloud sync, auto-update systems, accounts and analytics. These can be discussed later but must not creep into the initial build.
+Per-file remembered crop/zoom, advanced animated-image controls, advanced subtitle/audio track controls, rotation, edit/export, media libraries, playlists, tagging, transcoding, Jellyfin/Audiobookshelf/Spotify connections, streaming, mobile versions, cloud sync, auto-update systems, accounts and analytics. These can be discussed later but must not creep into the initial build.
 
 ### 7. Definition of done
 

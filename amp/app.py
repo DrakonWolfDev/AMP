@@ -8,7 +8,7 @@ import ctypes
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, QPoint, Qt, QTimer
+from PySide6.QtCore import QEvent, QFile, QPoint, Qt, QTimer
 from PySide6.QtGui import QAction, QIcon, QSurfaceFormat
 from PySide6.QtWidgets import (
     QApplication,
@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QMainWindow,
     QMenu,
+    QMessageBox,
     QPushButton,
     QToolButton,
     QVBoxLayout,
@@ -85,6 +86,7 @@ class Window(UpdateFeatureMixin, QMainWindow):
         for text, shortcut, callback in (
             ("Open file", "Ctrl+O", self.choose),
             ("New window", "Ctrl+N", self.new_window),
+            ("Move to Trash", "Delete", self.move_to_trash),
             ("Previous", "", lambda: self.navigate(-1)),
             ("Next", "", lambda: self.navigate(1)),
             ("Reset fit", "R", self.viewport.reset),
@@ -97,13 +99,14 @@ class Window(UpdateFeatureMixin, QMainWindow):
             action.setToolTip(f"{text} ({shortcut})" if shortcut else text)
             action.triggered.connect(callback)
             self.addAction(action)
-            if text == "New window":
+            if text in {"New window", "Move to Trash"}:
                 self.media_menu.addAction(action)
             self.actions_by_name[text] = action
         self.actions_by_name["Play / pause"].setVisible(False)
         self.actions_by_name["Fullscreen"].setAutoRepeat(False)
         self.actions_by_name["Screenshot"].setEnabled(False)
         self.actions_by_name["Reset fit"].setEnabled(False)
+        self.actions_by_name["Move to Trash"].setEnabled(False)
         self.lyrics_action = self.media_menu.addAction("Show lyrics")
         self.lyrics_action.setCheckable(True)
         self.lyrics_action.setChecked(True)
@@ -447,6 +450,7 @@ class Window(UpdateFeatureMixin, QMainWindow):
             self.actions_by_name["Play / pause"].setVisible(self.viewport.playable)
             self.actions_by_name["Screenshot"].setEnabled(not self.viewport.audio)
             self.actions_by_name["Reset fit"].setEnabled(not self.viewport.audio)
+            self.actions_by_name["Move to Trash"].setEnabled(True)
             self.controls.update_property("duration", 0)
             self.controls.update_property("time-pos", 0)
             self.controls.update_property("eof-reached", False)
@@ -456,12 +460,70 @@ class Window(UpdateFeatureMixin, QMainWindow):
             self.open_media_button.setChecked(False)
             self.chrome.reveal()
             self.position_overlays()
-            if path.suffix.lower() in {".gif", ".tif", ".tiff"}:
-                self.notify("Showing the first frame/page · wheel zoom · drag pan · R reset")
+            if path.suffix.lower() in {".tif", ".tiff"}:
+                self.notify("Showing the first page · wheel zoom · drag pan · R reset")
             return True
         except (RuntimeError, OSError, ValueError) as error:
             self.notify(str(error))
             return False
+
+    def move_to_trash(self):
+        path = self.current_path
+        if path is None:
+            return
+        answer = QMessageBox.question(
+            self,
+            "Move file to Trash?",
+            f"Move “{path.name}” to Trash?\n\nYou can restore it from Trash later.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            trash_result = QFile.moveToTrash(str(path))
+            # PySide's stub advertises ``(success, path_in_trash)`` for this
+            # static overload, but Linux Qt currently returns a plain bool.
+            moved = trash_result[0] if isinstance(trash_result, tuple) else trash_result
+        except OSError as error:
+            self.notify(f"Could not move {path.name} to Trash: {error}")
+            return
+        if not moved:
+            self.notify(f"Could not move {path.name} to Trash. Check its permissions and location.")
+            return
+
+        if self.folder_browser.directory == path.parent:
+            self.folder_browser.set_directory(path.parent)
+        try:
+            following = list(navigation_steps(path, 1))
+        except OSError:
+            following = []
+        if not following:
+            self.clear_media()
+        else:
+            self.navigation_attempt = NavigationAttempt(following, 1)
+            self._continue_navigation()
+        self.notify(f"Moved {path.name} to Trash")
+
+    def clear_media(self):
+        self.navigation_attempt = None
+        self.current_path = None
+        self.viewport.clear_media()
+        self.setWindowTitle("AMP")
+        self.folder_browser.current_path = None
+        self.folder_browser.mark_current()
+        self.filename.hide()
+        self.controls.hide()
+        self.image_dock.hide()
+        self.previous_button.hide()
+        self.next_button.hide()
+        self.lyrics_action.setVisible(False)
+        self.actions_by_name["Play / pause"].setVisible(False)
+        self.actions_by_name["Screenshot"].setEnabled(False)
+        self.actions_by_name["Reset fit"].setEnabled(False)
+        self.actions_by_name["Move to Trash"].setEnabled(False)
+        self.empty.show()
+        self.position_overlays()
 
     def navigate(self, direction):
         if self.current_path is None:

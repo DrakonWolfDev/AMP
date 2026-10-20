@@ -8,7 +8,7 @@ import ctypes
 from OpenGL import GL
 from OpenGL.error import GLError
 from PySide6.QtCore import QRectF, Qt, Signal, Slot
-from PySide6.QtGui import QImage, QPainter
+from PySide6.QtGui import QImage, QMovie, QPainter
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 
 from .image_backend import read_image
@@ -32,6 +32,7 @@ class MediaViewport(QOpenGLWidget):
         super().__init__(parent)
         self.transform = ViewTransform()
         self.image = QImage()
+        self.image_movie = None
         self.backend = None
         self.renderer = None
         self.video = False
@@ -139,6 +140,7 @@ class MediaViewport(QOpenGLWidget):
 
     def open_image(self, path):
         image = read_image(path)
+        self._stop_image_movie()
         self.load_serial += 1
         if self.backend:
             self.backend.command("stop")
@@ -147,8 +149,34 @@ class MediaViewport(QOpenGLWidget):
         self.image = image
         self.transform.media_width, self.transform.media_height = image.width(), image.height()
         self.reset()
+        if path.suffix.lower() == ".gif":
+            movie = QMovie(str(path), parent=self)
+            if movie.isValid():
+                movie.frameChanged.connect(self._animated_image_frame)
+                self.image_movie = movie
+                movie.start()
+
+    @Slot()
+    def _animated_image_frame(self):
+        if self.image_movie is None:
+            return
+        image = self.image_movie.currentImage()
+        if not image.isNull():
+            # Media named @2x must retain its real pixel dimensions on every frame.
+            image.setDevicePixelRatio(1)
+            self.image = image
+            self.update()
+
+    def _stop_image_movie(self):
+        if self.image_movie is None:
+            return
+        self.image_movie.stop()
+        self.image_movie.frameChanged.disconnect(self._animated_image_frame)
+        self.image_movie.deleteLater()
+        self.image_movie = None
 
     def open_video(self, path, *, playback_options=None):
+        self._stop_image_movie()
         self.ensure_video()
         for name, value in (playback_options or {}).items():
             self.backend.set(name, value)
@@ -171,6 +199,7 @@ class MediaViewport(QOpenGLWidget):
         return self.video or self.audio
 
     def open_audio(self, path, *, playback_options=None):
+        self._stop_image_movie()
         self.ensure_video()
         for name, value in (playback_options or {}).items():
             self.backend.set(name, value)
@@ -186,6 +215,18 @@ class MediaViewport(QOpenGLWidget):
         self.backend.load(path, self.load_serial)
         self.backend.read_music(path, self.load_serial)
         self.update()
+
+    def clear_media(self):
+        self._stop_image_movie()
+        self.load_serial += 1
+        if self.backend:
+            self.backend.command("stop")
+        self.video = False
+        self.audio = False
+        self.image = QImage()
+        self.transform.media_width = 1
+        self.transform.media_height = 1
+        self.reset()
 
     def paintGL(self):
         if self.closed:
@@ -393,6 +434,7 @@ class MediaViewport(QOpenGLWidget):
         if self.closed:
             return
         self.closed = True
+        self._stop_image_movie()
         if self.backend:
             # Freeing a live render context intentionally disables its VO; do
             # not turn that shutdown event into a spurious decoder error.

@@ -18,6 +18,7 @@ def test_window_preferences_reach_core_before_autoplay_load(method):
         reset=Mock(),
         update=Mock(),
         music_view=Mock(),
+        _stop_image_movie=Mock(),
     )
     path = Path("chosen-media.mp4")
     method(viewport, path, playback_options={"volume": 17, "mute": True, "loop-file": "inf"})

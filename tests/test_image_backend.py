@@ -41,13 +41,15 @@ def test_image_formats_are_readable(tmp_path, suffix, format):
     assert image.pixelColor(20, 20).red() > 200
 
 
-def test_multiframe_images_open_first_frame(tmp_path):
-    for suffix, format in (("gif", "GIF"), ("tiff", "TIFF")):
-        path = tmp_path / f"sequence.{suffix}"
-        Image.new("RGB", (40, 30), "red").save(
-            path, format=format, save_all=True, append_images=[Image.new("RGB", (40, 30), "blue")]
-        )
-        assert read_image(path).pixelColor(20, 15).red() == 255
+def test_multiframe_image_decoder_returns_first_frame(tmp_path):
+    path = tmp_path / "sequence.tiff"
+    Image.new("RGB", (40, 30), "red").save(
+        path,
+        format="TIFF",
+        save_all=True,
+        append_images=[Image.new("RGB", (40, 30), "blue")],
+    )
+    assert read_image(path).pixelColor(20, 15).red() == 255
 
 
 def test_media_filename_does_not_inherit_icon_dpi(tmp_path):

@@ -72,7 +72,9 @@ def test_fullscreen_applies_compositing_on_entry_and_after_settling(
 ):
     calls = []
     monkeypatch.setattr(
-        app_module, "enable_fullscreen_compositing", lambda window: calls.append(window.isFullScreen())
+        app_module,
+        "enable_fullscreen_compositing",
+        lambda window: calls.append(window.isFullScreen()),
     )
     window = Window(Preferences(tmp_path / "settings.ini"))
     window.set_fullscreen(True)

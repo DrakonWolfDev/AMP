@@ -54,7 +54,7 @@ Qt's xcb plugin may need distribution packages such as `libxcb-cursor0`.
 
 ## Controls
 
-Images: PNG, JPEG/JPG/JFIF, BMP, WebP, GIF (first frame), and TIFF/TIF (first page). EXIF rotations/mirroring are applied automatically. Very large images exceeding Qt's decoded-image allocation limit produce a size/limit message; the original file is never reduced or modified. HEIC/AVIF support and animated-image playback remain future work.
+Images: PNG, JPEG/JPG/JFIF, BMP, WebP, animated GIF, and TIFF/TIF (first page). EXIF rotations/mirroring are applied automatically. Very large images exceeding Qt's decoded-image allocation limit produce a size/limit message; the original file is never reduced or modified. HEIC/AVIF support remains future work.
 
 Video extensions accepted: MP4, MKV, WebM, MOV, AVI, M4V, MPG/MPEG, WMV, TS, MTS and M2TS. Tested samples include H.264/AAC MP4 and transport streams, H.264 MKV, silent MKV, VP9 WebM and WMV2/WMA WMV. Extensions identify containers, not a guarantee that every codec/profile inside them will decode on every runtime.
 
@@ -67,6 +67,7 @@ video; use the CC button in the playback controls to show or hide them.
 | Input | Action |
 | --- | --- |
 | Ctrl+O / drag local file into window | Open |
+| Delete | Confirm, then move the currently open file to the OS Trash / Recycle Bin |
 | Left / Right | Previous / next supported image, video or music file; wraps with a three-second amber notice |
 | Wheel / left drag | Zoom towards pointer / pan |
 | R | Reset fit |

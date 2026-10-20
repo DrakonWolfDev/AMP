@@ -150,6 +150,7 @@ class HelpDialog(ProjectDialog):
                 ("R", "Reset image or video fit"),
                 ("Middle click", "Toggle wheel navigation / zoom when enabled in Settings"),
                 ("S", "Save the visible image or video"),
+                ("Delete", "Confirm and move the open file to Trash"),
                 ("F / F11 / double click", "Toggle fullscreen"),
                 ("Esc", "Leave fullscreen or close a dialog"),
                 ("L", "Show or hide music lyrics"),
