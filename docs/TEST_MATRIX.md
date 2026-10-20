@@ -8,6 +8,8 @@ Human testing confirmed audible playback on Linux and Windows and confirmed full
 
 The manually triggered GitHub **Package previews** workflow builds Linux and Windows artifacts from one commit. Its Windows hosted runner is a non-interactive build environment, so the packaged GL/media smoke test is explicitly skipped there and remains part of target-desktop acceptance testing. No public release or legal-clearance claim is made.
 
+[Package preview run 39409743922](https://github.com/DrakonWolfDev/AMP/actions/runs/39409743922) passed on 2026-10-20 at commit `26d4d68`: Linux amd64 Debian-package and Windows x64 installer jobs both completed their tests, packaging and artifact upload. Installation and interactive desktop acceptance of those exact downloads remain pending.
+
 ## Hover pause/flicker near fullscreen button - 2026-10-18
 
 The user clarified that the pause and flicker begin while moving to the fullscreen button, without clicking. A baseline tooltip event created a separate native QTipLabel window while all six overlay opacity effects remained enabled. This is distinct from a fullscreen state transition; no fullscreen workaround or geometry delay was added for hovering.
