@@ -10,6 +10,8 @@ The Windows specification copies only `libmpv-2.dll` from the pinned upstream ar
 
 GitHub preview run `39439098377` built both platforms from commit `e6e0a7c`. Its Windows inventory confirmed that Qt Multimedia/PDF, development FFmpeg, JARs, test media and credentials were absent, but exposed twelve unused legacy PyOpenGL GLUT/GLE DLLs, including binaries requiring obsolete Visual C runtimes. The bundle policy now excludes and rejects the entire `OpenGL/DLLS` payload on both platforms. A replacement GitHub preview must confirm the corrected inventory; the first run is not a release candidate. GitHub temporarily refused the Linux artifact download because the account's artifact-egress limit was exceeded, so its generated inventory still requires direct inspection.
 
+Replacement preview run `39440380398` passed both platforms from commit `ae41331`. Direct inspection of both generated inventories and the extracted Debian package confirmed that the PyOpenGL helper DLLs and the other forbidden payloads above are absent. The Windows installer is 73,692,287 bytes with SHA-256 `7db1e324b84874f5f87211196687b4ca8c27450cf98eaf22a36ae669973241dc`; the Debian package is 68,058,534 bytes with SHA-256 `69886d939fc669d6b3cb3f76112c5b89da128465e7f0704a86b7b73212750dfa`. Both reports remain deliberately marked `release_ready: false` pending the corresponding-source, complete transitive-notice, clean-target and patent/signing decisions below.
+
 ### Resolved or bounded findings
 
 - AMP is AGPL-3.0-only and ships its complete corresponding source in this repository. Release artifacts must identify the exact commit/tag and retain the AGPL text.

@@ -27,9 +27,10 @@ redistribution review described in `docs/LICENSING.md`.
 
 - `.github/workflows/package-previews.yml` is manually triggered and builds Linux amd64 and
   Windows x64 artifacts from the same commit without publishing them.
-- [Run 39409743922](https://github.com/DrakonWolfDev/AMP/actions/runs/39409743922) passed both
-  packaging jobs at commit `26d4d68`; its two artifacts await clean-target installation and
-  interactive acceptance.
+- [Run 39440380398](https://github.com/DrakonWolfDev/AMP/actions/runs/39440380398) passed both
+  packaging jobs at commit `ae41331`. Its inventories were inspected and the Debian package was
+  extracted: the forbidden development/media payloads are absent. The two artifacts await
+  clean-target installation and interactive acceptance.
 - The builders run unit tests, lint, formatting, freeze/inventory checks and package assembly.
 - Hosted Windows CI is not treated as a native interactive GL/audio test. Its report explicitly
   records the skipped standalone smoke test; the downloaded installer requires desktop testing.
