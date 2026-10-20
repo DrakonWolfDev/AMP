@@ -277,46 +277,68 @@ class MediaViewport(QOpenGLWidget):
         functions = self.context().functions()
         physical = self.size() * self.devicePixelRatioF()
         width, height = physical.width(), physical.height()
-        functions.glViewport(0, 0, width, height)
-        functions.glClearColor(0, 0, 0, 1)
-        functions.glClear(0x00004000)
         if self.video and self.renderer:
-            self.renderer.update()
-            self.renderer.render(
-                flip_y=True,
-                opengl_fbo={
-                    "fbo": self.defaultFramebufferObject(),
-                    "w": width,
-                    "h": height,
-                    "internal_format": self.framebuffer_internal_format(),
-                },
-            )
+            # libmpv owns the native GL state while it renders.  Keep that work
+            # inside QPainter's native-painting boundary so Qt restores the
+            # texture, shader and blend state before composing subtitles.
+            painter = QPainter(self)
+            painter.beginNativePainting()
+            try:
+                functions.glViewport(0, 0, width, height)
+                functions.glClearColor(0, 0, 0, 1)
+                functions.glClear(0x00004000)
+                self.renderer.update()
+                self.renderer.render(
+                    flip_y=True,
+                    opengl_fbo={
+                        "fbo": self.defaultFramebufferObject(),
+                        "w": width,
+                        "h": height,
+                        "internal_format": self.framebuffer_internal_format(),
+                    },
+                )
+            finally:
+                painter.endNativePainting()
             self.render_count += 1
+            if self.subtitle_visible and self.subtitle_text:
+                self._paint_subtitle(painter)
+            painter.end()
         elif self.video and not self.video_frame.isNull():
+            functions.glViewport(0, 0, width, height)
+            functions.glClearColor(0, 0, 0, 1)
+            functions.glClear(0x00004000)
             painter = QPainter(self)
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
             painter.drawImage(QRectF(*self.transform.rect), self.video_frame)
+            if self.subtitle_visible and self.subtitle_text:
+                self._paint_subtitle(painter)
             painter.end()
             self.render_count += 1
         elif not self.image.isNull():
+            functions.glViewport(0, 0, width, height)
+            functions.glClearColor(0, 0, 0, 1)
+            functions.glClear(0x00004000)
             painter = QPainter(self)
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
             painter.drawImage(QRectF(*self.transform.rect), self.image)
             painter.end()
 
         elif self.audio:
+            functions.glViewport(0, 0, width, height)
+            functions.glClearColor(0, 0, 0, 1)
+            functions.glClear(0x00004000)
             painter = QPainter(self)
             self.music_view.paint(painter, self.width(), self.height())
             painter.end()
-
-        if self.video and self.subtitle_visible and self.subtitle_text:
-            self._paint_subtitle()
+        else:
+            functions.glViewport(0, 0, width, height)
+            functions.glClearColor(0, 0, 0, 1)
+            functions.glClear(0x00004000)
 
         self.rendered_serial = self.load_serial
         self.rendered_size = (width, height)
 
-    def _paint_subtitle(self):
-        painter = QPainter(self)
+    def _paint_subtitle(self, painter):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         font = QFont(painter.font())
         font.setPixelSize(max(17, min(38, self.height() // 18)))
@@ -344,7 +366,6 @@ class MediaViewport(QOpenGLWidget):
         painter.drawText(
             box.adjusted(padding_x, padding_y, -padding_x, -padding_y), flags, self.subtitle_text
         )
-        painter.end()
 
     def _clear_subtitles(self):
         self.subtitle_track = None
