@@ -42,6 +42,18 @@ a = Analysis(
 # otherwise follow python-mpv's ctypes lookup into /usr/lib and copy the host's
 # native multimedia libraries into the application bundle.
 a.exclude_system_libraries()
+# PyOpenGL ships legacy Windows GLUT/GLE DLLs as package data. AMP only uses
+# OpenGL.glReadPixels and must not carry those unrelated binaries on any target.
+for name in ("binaries", "datas"):
+    setattr(
+        a,
+        name,
+        [
+            item
+            for item in getattr(a, name)
+            if "opengl/dlls/" not in item[0].replace("\\", "/").lower()
+        ],
+    )
 pyz = PYZ(a.pure)
 exe = EXE(
     pyz,

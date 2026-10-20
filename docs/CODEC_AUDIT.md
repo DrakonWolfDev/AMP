@@ -8,6 +8,8 @@ The 2026-10-20 Linux frozen inventory was examined directly. It embeds CPython 3
 
 The Windows specification copies only `libmpv-2.dll` from the pinned upstream archive rather than the archive's headers, import library or libbluray JARs. It rejects Qt Multimedia/PDF, development FFmpeg and JAR files, records a per-file bundle inventory, and preserves CPython and PyInstaller notices. The next GitHub artifact must be inspected to confirm those gates against the hosted build before release.
 
+GitHub preview run `39439098377` built both platforms from commit `e6e0a7c`. Its Windows inventory confirmed that Qt Multimedia/PDF, development FFmpeg, JARs, test media and credentials were absent, but exposed twelve unused legacy PyOpenGL GLUT/GLE DLLs, including binaries requiring obsolete Visual C runtimes. The bundle policy now excludes and rejects the entire `OpenGL/DLLS` payload on both platforms. A replacement GitHub preview must confirm the corrected inventory; the first run is not a release candidate. GitHub temporarily refused the Linux artifact download because the account's artifact-egress limit was exceeded, so its generated inventory still requires direct inspection.
+
 ### Resolved or bounded findings
 
 - AMP is AGPL-3.0-only and ships its complete corresponding source in this repository. Release artifacts must identify the exact commit/tag and retain the AGPL text.

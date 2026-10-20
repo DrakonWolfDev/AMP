@@ -10,6 +10,8 @@ import sys
 import tomllib
 from pathlib import Path
 
+from bundle_policy import forbidden_runtime_file
+
 
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -98,11 +100,7 @@ def main():
         forbidden = [
             str(path.relative_to(bundle))
             for path in bundle.rglob("*")
-            if path.is_file()
-            and any(
-                name in path.name.casefold()
-                for name in ("qt6multimedia", "qt6pdf", "libavcodec", "libavformat")
-            )
+            if path.is_file() and forbidden_runtime_file(path.relative_to(bundle))
         ]
         if forbidden:
             raise RuntimeError(f"Unexpected bundled multimedia/PDF libraries: {forbidden}")
