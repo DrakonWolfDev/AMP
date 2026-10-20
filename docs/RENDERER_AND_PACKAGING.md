@@ -14,7 +14,7 @@ Image loading is isolated in image_backend.py. It keeps Qt's existing allocation
 
 `grabFramebuffer()` can trigger a fresh paint. AMP instead reads the preserved current Qt FBO using PyOpenGL `glReadPixels`, flips bottom-origin rows, and copies into a QImage. The probe asserts readback does not increment the render count and compares it pixel-for-pixel with Qt's own framebuffer capture while paused. QOpenGLWidget uses PartialUpdate so its last framebuffer is preserved after composition. Physical dimensions use Qt QSize rounding; Python round gave a one-pixel discrepancy at 150% scaling and was replaced. See [Qt framebuffer documentation](https://doc.qt.io/qt-6/qopenglwidget.html#grabFramebuffer).
 
-This validates framebuffer composition, not a promise about exact operating-system compositor presentation latency. Multi-monitor/context recreation, other drivers and Linux remain open validation work. A destroyed context currently closes its viewport backend; automatic recovery after context loss is not implemented.
+This validates framebuffer composition, not a promise about exact operating-system compositor presentation latency. Multi-monitor and scaling transitions have been tested manually on Linux and Windows; other drivers and deliberate context recreation remain open validation work. A destroyed context currently closes its viewport backend; automatic recovery after context loss is not implemented.
 
 On Mint 22.3 under X11 with an NVIDIA RTX 4060 and driver 595.99.02, Qt created an
 8-bit `GL_RGBA8` QOpenGLWidget framebuffer. Querying the active attachment at runtime and passing
@@ -41,7 +41,7 @@ The archive contains headers and LICENSE.LGPL. It is a development dependency un
 
 AMP's own code is AGPL-3.0-only. See LICENSE, THIRD_PARTY_NOTICES.md and docs/LICENSING.md. PySide6/Qt Essentials 6.12.0 and shiboken6 6.12.0, python-mpv 1.0.8, PyOpenGL 3.1.10, and the exact libmpv build are the documented runtime inventory. Dependencies retain their original licences. The selected libmpv archive is labelled LGPL and carries LGPL 2.1 text; this label does not constitute a complete dependency or redistribution audit.
 
-Before shipping, inspect each exact distribution's metadata/licences and FFmpeg build configuration; complete dependency notices and corresponding-source/relinking obligations as applicable; and validate an installer on clean Mint and Windows machines. The licence texts/notices are included in Python distributions and legal information is accessible from Help → About AMP / licences. No bundled binary installer, codec-patent clearance, completed release-compliance conclusion, tag or release is provided here.
+Before shipping, complete the exact dependency notices and corresponding-source/relinking obligations in `CODEC_AUDIT.md`, then validate the GitHub-built installers on clean Mint and Windows machines. Legal information is accessible from Help → About AMP / licences. Installable previews exist, but no codec-patent clearance, completed release-compliance conclusion, signed release, tag or deployment is provided here.
 
 ## M9 local package validation
 

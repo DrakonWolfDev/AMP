@@ -20,6 +20,6 @@ For distribution, provide recipients the licence, applicable notices and corresp
 4. Check selected GPL/LGPL versions and all dependencies for compatibility. Do not copy system codec DLLs into an installer merely because they are installed on the developer's machine.
 5. Review codec-patent requirements for the intended territories/distribution, then test clean Windows/Mint installations. Record gaps rather than claiming that an LGPL-labelled DLL or an AGPL project automatically clears them.
 
-This establishes the source-project licence and compliance workflow; a complete bundled-runtime audit remains unfinished. No public repository visibility change, binary release, tag or deployment is authorized by this work.
+The 2026-10-20 frozen-bundle findings and remaining blockers are recorded in `CODEC_AUDIT.md`. The builders preserve CPython/PyInstaller notices and reject known unused media/PDF runtimes, but exact Qt and Windows libmpv/FFmpeg corresponding-source packages and transitive notices remain unfinished. No public binary release, tag or deployment is authorized by this audit.
 
 References: [AGPLv3](https://www.gnu.org/licenses/agpl-3.0.html), [Qt licensing](https://doc.qt.io/qt-6/licensing.html), [mpv Copyright](https://github.com/mpv-player/mpv/blob/master/Copyright), [FFmpeg legal guidance](https://ffmpeg.org/legal.html).

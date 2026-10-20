@@ -93,7 +93,7 @@ At end of file the transport shows **Replay**; clicking it or pressing Space sta
 
 ## Status and limitations
 
-Real GL probes on Windows passed image and H.264 video capture, transforms, seek/resize/switch/shutdown at 100%, native 125%, and 150% effective Qt scaling. Linux Mint testing covers images, video, music, subtitles, local/NAS media, and PipeWire audio.
+Real GL probes on Windows passed image and H.264 video capture, transforms, seek/resize/switch/shutdown at 100%, native 125%, and 150% effective Qt scaling. Linux Mint testing covers images, animated GIFs, video, music, subtitles, local/NAS media, PipeWire audio, Trash navigation and Debian install/uninstall. Human testing on Linux and Windows confirmed audible playback, fullscreen and moving AMP between monitors with different scaling. Automatic graphics-context recovery and native assistive-technology testing remain open.
 
 ### Offline music artwork and lyrics
 
@@ -138,6 +138,8 @@ The media fills the canvas. Small floating icon controls and the filename fade a
 
 The renderer probe generates synthetic local fixtures and PNGs in ignored `artifacts/probe`. Run it before the session probe. The UI and resilience probes also use playback_probe fixtures; run playback_probe first. The process probe uses resilience_probe fixtures. On this native 125% display, `QT_SCALE_FACTOR=0.8` and `1.2` exercise effective DPR 1 and 1.5; use `--output artifacts/probe-100` or `--output artifacts/probe-150` to retain separate reports. These environment overrides do not test changing OS display settings or moving between monitors. CI runs source checks and unit tests, not desktop renderer probes.
 
+The manually triggered **Package previews** GitHub Actions workflow builds an amd64 Debian package and a Windows x64 installer from the same commit. These are unsigned test artifacts, not published releases. The Windows CI runner deliberately skips the interactive GL/media smoke test; test the downloaded installer on a normal desktop before treating it as validated.
+
 ## Specification
 
 - [Product roadmap](AMP_ROADMAP.md): behaviour and milestone acceptance criteria.
@@ -148,7 +150,7 @@ The renderer probe generates synthetic local fixtures and PNGs in ignored `artif
 
 The stack is Python, PySide6/Qt 6 Essentials, PyOpenGL for readback, Mutagen for local music tags, and python-mpv wrapping libmpv's OpenGL Render API. All media operations are local. mpv user configuration/scripts, external-file autoloading and reference following are disabled; FFmpeg protocols are restricted to local files. There is no analytics, database or background media scan. A manual update check contacts GitHub only when selected. Optional automatic checks are disabled by default and require confirmation; when enabled they read public AMP release metadata from GitHub at most once every 24 hours. AMP never sends media paths or usage data and never downloads or installs an update. No diagnostics log is written. Preferences are stored in Qt's local AppConfigLocation: `%LOCALAPPDATA%/AMP/AMP/preferences.ini` on Windows and `${XDG_CONFIG_HOME:-~/.config}/AMP/AMP/preferences.ini` on Linux. No media paths or playback history are stored. Delete this file while AMP is closed to restore defaults.
 
-AMP is licensed under the [GNU Affero General Public License, version 3 only](LICENSE) (`AGPL-3.0-only`). Copyright © 2026 Andrew Hodgson trading as Wolf Forge. Dependencies retain their own licences; see [third-party notices](THIRD_PARTY_NOTICES.md) and the [licensing policy](docs/LICENSING.md). Complete the binary/runtime redistribution audit before publishing binary releases.
+AMP is licensed under the [GNU Affero General Public License, version 3 only](LICENSE) (`AGPL-3.0-only`). Copyright © 2026 Andrew Hodgson trading as Wolf Forge. Dependencies retain their own licences; see [third-party notices](THIRD_PARTY_NOTICES.md), the [codec and bundle audit](docs/CODEC_AUDIT.md), and the [licensing policy](docs/LICENSING.md). Public binary release remains blocked until exact corresponding-source archives and complete Qt/libmpv/FFmpeg transitive notices are prepared; the audit is not legal advice or patent clearance.
 
 
 ### OS file associations

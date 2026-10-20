@@ -1,4 +1,12 @@
-# Test matrix — 2026-10-18
+# Test matrix — 2026-10-20
+
+## Linux package, animated GIF and Trash validation — 2026-10-20
+
+The current source passes 108 unit tests plus Ruff lint/format. The amd64 Debian builder passes its tests, freeze and `dpkg-deb` gates. Manual Mint testing confirmed package install, uninstall and reinstall; animated GIF playback; confirmation and restoration-safe Trash handling; and automatic display of the next naturally sorted image after deletion. A native Linux OpenGL probe also exercised the real `QFile.moveToTrash()` call and verified that the framebuffer changed to the next image. This exposed and fixed a PySide Linux binding difference where the static method returns a boolean despite its stub advertising a tuple.
+
+Human testing confirmed audible playback on Linux and Windows and confirmed fullscreen plus movement between monitors with different scaling on both platforms. These results supersede older historical entries below that list Linux audio, monitor transitions or fullscreen scaling as pending. Native assistive-technology testing, deliberate graphics-context loss, prolonged soak testing and clean-machine testing of the new GitHub-produced installers remain open.
+
+The manually triggered GitHub **Package previews** workflow builds Linux and Windows artifacts from one commit. Its Windows hosted runner is a non-interactive build environment, so the packaged GL/media smoke test is explicitly skipped there and remains part of target-desktop acceptance testing. No public release or legal-clearance claim is made.
 
 ## Hover pause/flicker near fullscreen button - 2026-10-18
 

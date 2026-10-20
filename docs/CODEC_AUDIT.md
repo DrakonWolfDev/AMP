@@ -1,6 +1,36 @@
-# Quick codec and software audit - 2026-10-18
+# Codec and frozen-bundle audit - 2026-10-20
 
-The inspected development stack shows no obvious top-level licence incompatibility with AMP's AGPL-3.0-only source project. This is **not clearance to distribute a standalone binary bundle**. Exact transitive sources, notices and release packaging remain incomplete. This check covers local Windows package/build/licence evidence, not a vulnerability assessment, exhaustive dependency SBOM, legal opinion or codec-patent clearance.
+## Current release conclusion
+
+**Status: suitable for private preview testing; not yet cleared for public binary release.** This is an engineering compliance audit, not legal advice. The source licences are compatible at the level inspected, and the builders now exclude known unused multimedia/PDF binaries and preserve AMP, dependency, CPython and PyInstaller licence material. Public release remains blocked by the exact corresponding-source and third-party-notice work listed below, plus a territory-specific codec-patent decision.
+
+The 2026-10-20 Linux frozen inventory was examined directly. It embeds CPython 3.12, PySide6 Essentials/shiboken6 6.12.0, Qt Core/GUI/Widgets/OpenGL/Network/DBus/SVG/Wayland/XCB libraries, ICU 73, Qt image/platform/TLS/input plugins, python-mpv 1.0.8, PyOpenGL 3.1.10, Mutagen 1.47.0 and packaging 26.3. It does **not** bundle libmpv, FFmpeg, Qt Multimedia or Qt PDF; the Debian package depends on the distribution's `libmpv2` and graphics packages. The builder now records every bundled file's SHA-256 and size and adds the exact CPython and PyInstaller licence files. Linux system packages remain outside AMP's archive and are supplied and updated by the distribution.
+
+The Windows specification copies only `libmpv-2.dll` from the pinned upstream archive rather than the archive's headers, import library or libbluray JARs. It rejects Qt Multimedia/PDF, development FFmpeg and JAR files, records a per-file bundle inventory, and preserves CPython and PyInstaller notices. The next GitHub artifact must be inspected to confirm those gates against the hosted build before release.
+
+### Resolved or bounded findings
+
+- AMP is AGPL-3.0-only and ships its complete corresponding source in this repository. Release artifacts must identify the exact commit/tag and retain the AGPL text.
+- Mutagen is GPL-2.0-or-later. Selecting GPLv3 for the combined work is compatible with AMP's AGPLv3 licensing; Mutagen's full COPYING file and source/version must remain available.
+- PyInstaller's bootloader exception permits distributing generated bundles under the application's/dependencies' licences. Both platform builders nevertheless retain its exact COPYING file for transparency.
+- CPython is PSF-licensed and GPL-compatible. Both platform builders now copy the interpreter's exact `LICENSE.txt`; incorporated-software acknowledgements must remain with that file.
+- PyOpenGL and packaging carry permissive notices; the frozen metadata/full PyOpenGL notice is retained.
+- Linux does not redistribute libmpv/FFmpeg. Windows dynamically loads a separately named `libmpv-2.dll`, and Qt remains in replaceable shared libraries rather than being statically linked into AMP.
+
+### Blocking work before public binaries
+
+1. Archive and publish the exact PySide6/Qt 6.12.0 and shiboken6 corresponding sources, build configuration and the complete third-party notices for every shipped Qt library/plugin (including ICU, image codecs, platform, TLS and Wayland/XCB components). The wheel metadata and generic LGPL/GPL texts are not a substitute.
+2. Archive and publish exact corresponding source, configuration, patches and complete transitive notices for the pinned Windows libmpv/FFmpeg build and all libraries incorporated into that DLL. The upstream asset label and `-Dgpl=false` are evidence, not a complete grant or inventory.
+3. Add a stable source-delivery page/archive beside each binary and identify the release commit, dependency source archives, build recipes and instructions needed to replace the LGPL libraries. Do not rely only on moving upstream branches.
+4. Inspect the two GitHub artifacts' generated inventories and legal directories. Confirm no development FFmpeg, Qt Multimedia/PDF, test media, credentials or unrelated runtime files entered either package.
+5. Obtain an informed codec-patent decision for intended distribution territories. H.264/HEVC/AAC decoding may involve patent rights independently of open-source copyright compliance.
+6. Test install/upgrade/Open With/uninstall on clean target systems, retain the final hashes and logs, and decide whether unsigned previews are acceptable or release signing is required.
+
+Primary sources used for this update: [Qt licensing](https://doc.qt.io/qt-6/licensing.html), [Qt for Python licences](https://doc.qt.io/qtforpython-6/licenses.html), [FFmpeg legal and compliance guidance](https://ffmpeg.org/legal.html), [mpv copyright/licensing](https://github.com/mpv-player/mpv/blob/master/Copyright), [PyInstaller's bootloader exception](https://pyinstaller.org/en/stable/license.html), [Python licensing](https://docs.python.org/3/license.html), and [Mutagen's upstream licence metadata](https://github.com/quodlibet/mutagen/blob/main/pyproject.toml).
+
+## Earlier development audit — 2026-10-18
+
+The inspected development stack showed no obvious top-level licence incompatibility with AMP's AGPL-3.0-only source project. This was **not clearance to distribute a standalone binary bundle**. Exact transitive sources, notices and release packaging were incomplete. This check covered local Windows package/build/licence evidence, not a vulnerability assessment, exhaustive dependency SBOM, legal opinion or codec-patent clearance.
 
 ## What was verified
 

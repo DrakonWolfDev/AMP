@@ -52,3 +52,11 @@ in Windows Open With without changing existing defaults.
 - Preserve the bundled third-party notices and complete the native dependency/source audit.
 - Build Windows artifacts on Windows and Debian artifacts on the oldest supported Linux base.
 - Record the SHA-256 digest for every published installer.
+
+## GitHub preview builds
+
+Run **Package previews** from the repository's Actions tab to build Linux amd64 and Windows x64
+test artifacts from the selected commit. The workflow does not publish a release. Download both
+artifacts and perform the clean-machine checks above. GitHub's Windows runner is non-interactive,
+so its build explicitly skips the standalone GL/media smoke test and records that fact in
+`report.json`; this is not a substitute for testing the installer on a desktop.

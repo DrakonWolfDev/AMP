@@ -2,6 +2,7 @@
 
 import argparse
 import hashlib
+import importlib.metadata
 import json
 import shutil
 import subprocess
@@ -12,6 +13,20 @@ from pathlib import Path
 
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def python_license_path():
+    version = f"python{sys.version_info.major}.{sys.version_info.minor}"
+    candidates = (
+        Path(sys.base_prefix) / "LICENSE.txt",
+        Path(sys.base_prefix) / "LICENSE",
+        Path(sys.base_prefix) / "lib" / version / "LICENSE.txt",
+        Path("/usr/share/doc") / version / "copyright",
+    )
+    try:
+        return next(path for path in candidates if path.is_file())
+    except StopIteration as error:
+        raise RuntimeError("The embedded Python licence file could not be located.") from error
 
 
 def main():
@@ -25,7 +40,7 @@ def main():
     if output.exists():
         parser.error("Choose a new output directory; existing builds are never overwritten.")
     output.mkdir(parents=True)
-    report = {"passed": False, "published": False, "checks": []}
+    report = {"passed": False, "published": False, "release_ready": False, "checks": []}
 
     def run(arguments, name, *, cwd=root):
         result = subprocess.run(
@@ -62,6 +77,24 @@ def main():
             "freeze",
         )
         bundle = output / "dist/AMP"
+        legal = bundle / "_internal/LICENSES"
+        shutil.copyfile(python_license_path(), legal / "Python.txt")
+        freezer = importlib.metadata.distribution("pyinstaller")
+        copied_freezer_license = False
+        for path in freezer.files or []:
+            if Path(path).name == "COPYING.txt":
+                shutil.copyfile(freezer.locate_file(path), legal / "PyInstaller.txt")
+                copied_freezer_license = True
+                break
+        if not copied_freezer_license:
+            raise RuntimeError("The PyInstaller licence file could not be located.")
+        (bundle / "BUILD_INFORMATION.txt").write_text(
+            "Built from the AMP source tree. See THIRD_PARTY_NOTICES.md and the LICENSES folder "
+            "for licensing information. libmpv and its codec stack are supplied by the Linux "
+            "distribution, not this bundle. Validate installation and playback on the target "
+            "system.\n",
+            encoding="utf-8",
+        )
         forbidden = [
             str(path.relative_to(bundle))
             for path in bundle.rglob("*")
@@ -73,6 +106,12 @@ def main():
         ]
         if forbidden:
             raise RuntimeError(f"Unexpected bundled multimedia/PDF libraries: {forbidden}")
+        report["inventory"] = [
+            {"file": str(p.relative_to(bundle)), "sha256": digest(p), "bytes": p.stat().st_size}
+            for p in sorted(bundle.rglob("*"))
+            if p.is_file()
+        ]
+        report["bundle_bytes"] = sum(item["bytes"] for item in report["inventory"])
 
         project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"]
         package_root = output / "package"

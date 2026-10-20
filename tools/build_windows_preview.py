@@ -20,6 +20,11 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--iscc", type=Path, help="Existing Inno Setup 6.7.3 compiler")
+    parser.add_argument(
+        "--skip-standalone-smoke",
+        action="store_true",
+        help="Build on a non-interactive CI runner; target-machine smoke testing remains required",
+    )
     args = parser.parse_args()
     if sys.platform != "win32":
         parser.error("Build the Windows package on Windows.")
@@ -74,9 +79,14 @@ def main():
         legal = bundle / "_internal/LICENSES"
         shutil.copyfile(Path(sys.base_prefix) / "LICENSE.txt", legal / "Python.txt")
         freezer = importlib.metadata.distribution("pyinstaller")
+        copied_freezer_license = False
         for path in freezer.files or []:
             if Path(path).name == "COPYING.txt":
                 shutil.copyfile(freezer.locate_file(path), legal / "PyInstaller.txt")
+                copied_freezer_license = True
+                break
+        if not copied_freezer_license:
+            raise RuntimeError("The PyInstaller licence file could not be located.")
         (bundle / "BUILD_INFORMATION.txt").write_text(
             "Built from the AMP source tree. See THIRD_PARTY_NOTICES.md and the LICENSES folder "
             "for licensing information. Validate installation and playback on the target system.\n",
@@ -96,30 +106,33 @@ def main():
         ]
         if forbidden:
             raise RuntimeError(f"Unexpected unused/development runtime files: {forbidden}")
-        smoke_env = os.environ.copy()
-        for key in ("AMP_MPV_DIR", "PYTHONPATH", "PYTHONHOME"):
-            smoke_env.pop(key, None)
-        smoke_env["PATH"] = str(Path(os.environ.get("SYSTEMROOT", "C:/Windows")) / "System32")
-        smoke = output / "smoke"
-        smoke.mkdir()
-        run(
-            [
-                bundle / "AMP.exe",
-                "--self-test",
-                "--output",
-                smoke,
-                "--video",
-                root / "artifacts/playback/av.mp4",
-                "--music",
-                root / "artifacts/playback/tone.wav",
-            ],
-            "standalone-smoke",
-            cwd=smoke,
-            env=smoke_env,
-        )
-        report["smoke"] = json.loads((smoke / "report.json").read_text(encoding="utf-8"))
-        if not report["smoke"]["passed"]:
-            raise RuntimeError("Standalone media/GL checks failed; see smoke/report.json")
+        if args.skip_standalone_smoke:
+            report["standalone_smoke"] = "skipped on non-interactive build runner"
+        else:
+            smoke_env = os.environ.copy()
+            for key in ("AMP_MPV_DIR", "PYTHONPATH", "PYTHONHOME"):
+                smoke_env.pop(key, None)
+            smoke_env["PATH"] = str(Path(os.environ.get("SYSTEMROOT", "C:/Windows")) / "System32")
+            smoke = output / "smoke"
+            smoke.mkdir()
+            run(
+                [
+                    bundle / "AMP.exe",
+                    "--self-test",
+                    "--output",
+                    smoke,
+                    "--video",
+                    root / "artifacts/playback/av.mp4",
+                    "--music",
+                    root / "artifacts/playback/tone.wav",
+                ],
+                "standalone-smoke",
+                cwd=smoke,
+                env=smoke_env,
+            )
+            report["smoke"] = json.loads((smoke / "report.json").read_text(encoding="utf-8"))
+            if not report["smoke"]["passed"]:
+                raise RuntimeError("Standalone media/GL checks failed; see smoke/report.json")
         report["inventory"] = [
             {"file": str(p.relative_to(bundle)), "sha256": digest(p), "bytes": p.stat().st_size}
             for p in sorted(bundle.rglob("*"))

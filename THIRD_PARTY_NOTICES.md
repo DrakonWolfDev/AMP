@@ -10,7 +10,7 @@ AMP's own code is Copyright © 2026 Andrew Hodgson trading as Wolf Forge, licens
 - Copyright holders include The Qt Company Ltd. and other contributors; retain upstream copyright/third-party files for the exact packaged components.
 - Licence texts: LICENSES/LGPL-3.0-only.txt and LICENSES/GPL-3.0-only.txt (the latter is incorporated by LGPLv3).
 - Qt also incorporates separately licensed code such as image decoders. Before any binary bundle, collect the notices and matching source obligations for the actual Qt plugins/libraries included. Do not assume this summary replaces them.
-- The installed Essentials wheel also contains unused Qt Multimedia/FFmpeg libraries. Its `avcodec-63.dll` reports LGPL version 2.1 or later and a configuration without `--enable-gpl` or `--enable-nonfree`. AMP does not import Qt Multimedia, but distributing the whole wheel includes these files; their full third-party notices and corresponding-source obligations still need covering. See docs/CODEC_AUDIT.md.
+- The installed Essentials wheel also contains unused Qt Multimedia/FFmpeg libraries. AMP's validated PyInstaller specifications exclude Qt Multimedia, Qt PDF and their FFmpeg libraries/plugins from both application bundles. The builder rejects them if they reappear. Exact notices and corresponding sources are still required for the Qt libraries and image/platform plugins that remain. See docs/CODEC_AUDIT.md.
 - References: https://doc.qt.io/qt-6/licensing.html and https://doc.qt.io/qt-6/licenses-used-in-qt.html
 
 ## python-mpv — 1.0.8
@@ -47,11 +47,11 @@ AMP's own code is Copyright © 2026 Andrew Hodgson trading as Wolf Forge, licens
 
 ## Python and development tools
 
-The Windows standalone build embeds CPython and the PyInstaller bootloader. Its build helper copies the interpreter's LICENSE.txt and PyInstaller's COPYING.txt (including its bootloader exception) into the bundle's LICENSES directory. PyInstaller and its hook/tool dependencies are build-time tools, not additional playback libraries. Inno Setup creates the Windows installer; its unmodified licence is preserved in LICENSES/InnoSetup-6.7.3.txt. See docs/RELEASE_READINESS.md for outstanding release obligations.
+The Linux and Windows standalone builds embed CPython and the PyInstaller bootloader. Both build helpers copy the interpreter's LICENSE.txt and PyInstaller's COPYING.txt (including its bootloader exception) into the bundle's LICENSES directory. PyInstaller and its hook/tool dependencies are build-time tools, not additional playback libraries. Inno Setup creates the Windows installer; its unmodified licence is preserved in LICENSES/InnoSetup-6.7.3.txt. See docs/RELEASE_READINESS.md for outstanding release obligations.
 
 Pillow 13.0.0 is used only to generate synthetic image/EXIF test fixtures, not to decode images in AMP. Its installed metadata identifies MIT-CMU; the complete installed licence is preserved at LICENSES/Pillow-13.0.0.txt. Source: https://github.com/python-pillow/Pillow. Preserve its notices if distributing the development environment.
 
-The current source installation uses the user's Python interpreter. A future installer embedding CPython must include its PSF licence and bundled third-party notices. pytest, Ruff, setuptools and imageio-ffmpeg are development/build dependencies, not application playback dependencies. Their source/wheel licence files must remain intact when distributed. The development FFmpeg fixture generator is not a licence-cleared AMP media runtime and must not accidentally enter a release bundle.
+The source installation uses the user's Python interpreter; standalone packages embed CPython and must retain its PSF licence and incorporated-software notices. pytest, Ruff, setuptools and imageio-ffmpeg are development/build dependencies, not application playback dependencies. Their source/wheel licence files must remain intact when distributing a development environment. The development FFmpeg fixture generator is not an AMP media runtime and is rejected from application bundles.
 
 ## Scope and provenance
 
