@@ -34,6 +34,18 @@ redistribution review described in `docs/LICENSING.md`.
 - Hosted Windows CI is not treated as a native interactive GL/audio test. Its report explicitly
   records the skipped standalone smoke test; the downloaded installer requires desktop testing.
 
+## Automated release path
+
+- Pushing a version-matched tag such as `v0.8b` runs `.github/workflows/release.yml`.
+- Publication is deliberately blocked unless the repository variable
+  `AMP_BINARY_RELEASE_APPROVED` is set to `true` after the checks below are complete.
+- The workflow builds Windows and Linux from the same tag, verifies both artifacts, publishes one
+  GitHub prerelease, and then dispatches a manifest update to the Wolf Forge website.
+- The repository secret `WOLF_FORGE_SITE_TOKEN` must contain a fine-grained token limited to the
+  `DrakonWolfDev/wolf-forge-static` repository with Contents read/write permission. A missing token
+  stops publication during preflight.
+- The website keeps its previous release links if its validation or update workflow fails.
+
 ## Before publishing binaries
 
 - Complete the exact native/transitive dependency, notice and corresponding-source inventory;

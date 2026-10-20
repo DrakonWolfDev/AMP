@@ -6,7 +6,7 @@
   #error OutputRoot is required
 #endif
 #ifndef AppVersion
-  #define AppVersion "0.0.1"
+  #define AppVersion "0.8b"
 #endif
 [Setup]
 AppId={{DF5713F5-6E84-4EA3-9330-A510C77819DD}

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "andy-media-player"
-version = "0.0.1"
+version = "0.8b"
 description = "A local, private-by-design image and video viewer"
 readme = "README.md"
 license = "AGPL-3.0-only"

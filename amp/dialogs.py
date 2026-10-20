@@ -19,6 +19,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from .version import display_version
+
 
 def label(text, name="", wrap=True):
     widget = QLabel(text)
@@ -86,9 +88,9 @@ class AboutDialog(ProjectDialog):
             "Andy's Media Player", "A quiet home for local images, video and music.", parent
         )
         try:
-            release = version("andy-media-player")
+            release = display_version(version("andy-media-player"))
         except PackageNotFoundError:
-            release = "0.0.1"
+            release = "0.8b"
         self.content.addWidget(label(f"DEVELOPMENT PREVIEW  ·  {release}", "dialogEyebrow"))
         links = QHBoxLayout()
         links.setSpacing(24)

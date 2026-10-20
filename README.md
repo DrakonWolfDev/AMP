@@ -32,7 +32,7 @@ Build the Debian package (or use a supplied build), then install it with APT:
 ```sh
 .venv/bin/python -m pip install -r requirements-linux-build.txt
 .venv/bin/python tools/build_linux_deb.py --output artifacts/linux-deb
-sudo apt install ./artifacts/linux-deb/amp-media-player_0.0.1_amd64.deb
+sudo apt install ./artifacts/linux-deb/amp-media-player_0.8b_amd64.deb
 ```
 
 The package registers AMP with the desktop's **Open With** list for its supported image,

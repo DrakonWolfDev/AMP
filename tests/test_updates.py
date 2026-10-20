@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
+from amp.update_feature import UPDATE_CHANNEL
+from amp.version import display_version
 from wolf_update import CheckStatus, MemoryStateStore, UpdateApplication, UpdateService
 from wolf_update.state import UpdateState
 
@@ -24,6 +26,16 @@ def application():
         repository="DrakonWolfDev/AMP",
         update_url="https://github.com/DrakonWolfDev/AMP/releases",
     )
+
+
+def test_public_beta_version_keeps_its_short_label():
+    assert display_version("0.8b0") == "0.8b"
+    assert display_version("0.8b") == "0.8b"
+    assert display_version("0.8b1") == "0.8b1"
+
+
+def test_amp_accepts_beta_update_notifications():
+    assert UPDATE_CHANNEL == "experimental"
 
 
 def test_update_service_selects_stable_release_and_never_has_download_api():

@@ -14,15 +14,18 @@ from wolf_update import (
 )
 from wolf_update.qt import QtUpdateChecker
 
+from .version import display_version
+
 UPDATE_REPOSITORY = "DrakonWolfDev/AMP"
 UPDATE_DESTINATION = "https://github.com/DrakonWolfDev/AMP/releases"
+UPDATE_CHANNEL = "experimental"
 
 
 def current_version():
     try:
         return version("andy-media-player")
     except PackageNotFoundError:
-        return "0.0.1"
+        return "0.8b"
 
 
 class UpdateFeatureMixin:
@@ -36,7 +39,7 @@ class UpdateFeatureMixin:
             current_version=current_version(),
             repository=UPDATE_REPOSITORY,
             update_url=UPDATE_DESTINATION,
-            channel="stable",
+            channel=UPDATE_CHANNEL,
         )
         source = GitHubReleaseSource(
             application.repository,
@@ -64,7 +67,7 @@ class UpdateFeatureMixin:
             QMessageBox.information(
                 self,
                 "AMP is up to date",
-                f"Version {current_version()} is the newest stable release.",
+                f"Version {display_version(current_version())} is the newest applicable release.",
             )
         elif manual and result.status is CheckStatus.FAILED:
             QMessageBox.warning(
@@ -84,7 +87,7 @@ class UpdateFeatureMixin:
         message = QMessageBox(self)
         message.setWindowTitle("AMP update available")
         message.setIcon(QMessageBox.Icon.Information)
-        message.setText(f"AMP {release.version} is available.")
+        message.setText(f"AMP {display_version(release.version)} is available.")
         message.setInformativeText(
             "AMP will open the official GitHub download page. It will not download or install "
             "anything automatically."

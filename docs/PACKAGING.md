@@ -17,7 +17,7 @@ python3 -m venv .venv
 The result is `amp-media-player_<version>_amd64.deb`. Install it with:
 
 ```sh
-sudo apt install ./artifacts/linux-deb/amp-media-player_0.0.1_amd64.deb
+sudo apt install ./artifacts/linux-deb/amp-media-player_0.8b_amd64.deb
 ```
 
 The package installs a self-contained Python/Qt application under `/opt/amp`, an `amp`

@@ -1,0 +1,154 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        env:
+          TAG: ${{ github.ref_name }}
+          RELEASE_APPROVED: ${{ vars.AMP_BINARY_RELEASE_APPROVED }}
+          SITE_TOKEN: ${{ secrets.WOLF_FORGE_SITE_TOKEN }}
+        run: |
+          test "$RELEASE_APPROVED" = "true" || {
+            echo "AMP binary publication is not approved. Set AMP_BINARY_RELEASE_APPROVED=true only after the documented release gates pass." >&2
+            exit 1
+          }
+          test -n "$SITE_TOKEN" || {
+            echo "WOLF_FORGE_SITE_TOKEN is required before publishing." >&2
+            exit 1
+          }
+          version="$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
+          test "$TAG" = "v$version" || {
+            echo "Tag $TAG does not match project version $version." >&2
+            exit 1
+          }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  linux:
+    needs: preflight
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Linux runtime libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libmpv2 libegl1 libopengl0 libgl1 libxcb-cursor0
+      - name: Install pinned application and build dependencies
+        run: |
+          python -m pip install -e ".[dev]"
+          python -m pip install -r requirements-linux-build.txt
+      - name: Build Linux package
+        run: python tools/build_linux_deb.py --output artifacts/release-linux
+      - uses: actions/upload-artifact@v4
+        with:
+          name: amp-release-linux-${{ github.sha }}
+          path: artifacts/release-linux/*.deb
+          if-no-files-found: error
+
+  windows:
+    needs: preflight
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install application and validated libmpv runtime
+        shell: powershell
+        run: ./tools/setup_windows.ps1
+      - name: Install pinned build dependencies
+        shell: powershell
+        run: |
+          ./.venv/Scripts/python.exe -m pip install -r requirements-windows-build.txt
+          choco upgrade innosetup --version=6.7.3 --allow-downgrade -y
+      - name: Build Windows installer
+        shell: powershell
+        run: |
+          ./.venv/Scripts/python.exe tools/build_windows_preview.py `
+            --output artifacts/release-windows `
+            --iscc "C:/Program Files (x86)/Inno Setup 6/ISCC.exe" `
+            --skip-standalone-smoke
+      - uses: actions/upload-artifact@v4
+        with:
+          name: amp-release-windows-${{ github.sha }}
+          path: artifacts/release-windows/installer/*.exe
+          if-no-files-found: error
+
+  publish:
+    needs: [preflight, linux, windows]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.preflight.outputs.version }}
+      SITE_TOKEN: ${{ secrets.WOLF_FORGE_SITE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: amp-release-*
+          path: release
+          merge-multiple: true
+      - name: Verify complete release set
+        run: |
+          test -f "release/AMP-${VERSION}-setup.exe"
+          test -f "release/amp-media-player_${VERSION}_amd64.deb"
+          git archive --format=tar.gz --prefix="AMP-${VERSION}/" -o "release/AMP-${VERSION}-source.tar.gz" HEAD
+          (cd release && sha256sum * > SHA256SUMS.txt && sha256sum --check SHA256SUMS.txt)
+      - name: Publish GitHub prerelease
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: AMP ${{ needs.preflight.outputs.version }}
+          prerelease: true
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            release/AMP-${{ needs.preflight.outputs.version }}-setup.exe
+            release/amp-media-player_${{ needs.preflight.outputs.version }}_amd64.deb
+            release/AMP-${{ needs.preflight.outputs.version }}-source.tar.gz
+            release/SHA256SUMS.txt
+      - name: Request website manifest update
+        env:
+          GH_TOKEN: ${{ secrets.WOLF_FORGE_SITE_TOKEN }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          version = os.environ["VERSION"]
+          payload = {
+              "event_type": "desktop_release_published",
+              "client_payload": {
+                  "project": "amp",
+                  "version": version,
+                  "tag": f"v{version}",
+                  "artifacts": {
+                      "windows": f"AMP-{version}-setup.exe",
+                      "linux": f"amp-media-player_{version}_amd64.deb",
+                  },
+              },
+          }
+          path = Path(os.environ["RUNNER_TEMP"]) / "website-release.json"
+          path.write_text(json.dumps(payload), encoding="utf-8")
+          PY
+          gh api --method POST repos/DrakonWolfDev/wolf-forge-static/dispatches --input "$RUNNER_TEMP/website-release.json"
