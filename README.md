@@ -33,7 +33,7 @@ Build the Debian package (or use a supplied build), then install it with APT:
 ```sh
 .venv/bin/python -m pip install -r requirements-linux-build.txt
 .venv/bin/python tools/build_linux_deb.py --output artifacts/linux-deb
-sudo apt install ./artifacts/linux-deb/amp-media-player_0.8b_amd64.deb
+sudo apt install ./artifacts/linux-deb/amp-media-player_0.8.1b_amd64.deb
 ```
 
 The package registers AMP with the desktop's **Open With** list for its supported image,
@@ -192,7 +192,7 @@ The stack is Python, PySide6/Qt 6, PyOpenGL for readback and Mutagen for local m
 
 There is no analytics, database or background media scan. A manual update check contacts GitHub only when selected. Optional automatic checks are disabled by default and require confirmation; when enabled they read public AMP release metadata from GitHub at most once every 24 hours. AMP's update requests contain no media paths or playback history; AMP never downloads or installs an update. No diagnostics log is written during ordinary use. Preferences are stored in Qt's local AppConfigLocation: `%LOCALAPPDATA%/AMP/AMP/preferences.ini` on Windows and `${XDG_CONFIG_HOME:-~/.config}/AMP/AMP/preferences.ini` on Linux. No media paths or playback history are stored. Delete this file while AMP is closed to restore defaults.
 
-AMP is licensed under the [GNU Affero General Public License, version 3 only](LICENSE) (`AGPL-3.0-only`). Copyright © 2026 Andrew Hodgson trading as Wolf Forge. Dependencies retain their own licences; see [third-party notices](THIRD_PARTY_NOTICES.md), the [codec and bundle audit](docs/CODEC_AUDIT.md), the [Qt redistribution record](docs/QT_REDISTRIBUTION.md), the [source-delivery plan](docs/SOURCE_DELIVERY.md), and the [licensing policy](docs/LICENSING.md). The Windows bundle excludes libmpv, FFmpeg and Qt's FFmpeg media plugin; corresponding Qt sources are pinned. The audit is not legal advice or patent clearance. Version 0.8b is intentionally unsigned and must be distributed with published SHA-256 checksums.
+AMP is licensed under the [GNU Affero General Public License, version 3 only](LICENSE) (`AGPL-3.0-only`). Copyright © 2026 Andrew Hodgson trading as Wolf Forge. Dependencies retain their own licences; see [third-party notices](THIRD_PARTY_NOTICES.md), the [codec and bundle audit](docs/CODEC_AUDIT.md), the [Qt redistribution record](docs/QT_REDISTRIBUTION.md), the [source-delivery plan](docs/SOURCE_DELIVERY.md), and the [licensing policy](docs/LICENSING.md). The Windows bundle excludes libmpv, FFmpeg and Qt's FFmpeg media plugin; corresponding Qt sources are pinned. The audit is not legal advice or patent clearance. Version 0.8.1b is intentionally unsigned and must be distributed with published SHA-256 checksums.
 
 
 ### OS file associations

@@ -17,7 +17,7 @@ python3 -m venv .venv
 The result is `amp-media-player_<version>_amd64.deb`. Install it with:
 
 ```sh
-sudo apt install ./artifacts/linux-deb/amp-media-player_0.8b_amd64.deb
+sudo apt install ./artifacts/linux-deb/amp-media-player_0.8.1b_amd64.deb
 ```
 
 The package installs a self-contained Python/Qt application under `/opt/amp`, an `amp`
@@ -82,9 +82,9 @@ virtual environment and pinned build requirements as above, then run:
 ```sh
 .venv/bin/python tools/build_linux_rpm.py --output artifacts/linux-rpm
 .venv/bin/python tools/build_linux_deb.py --format appimage --output artifacts/linux-appimage
-sudo dnf install ./artifacts/linux-rpm/amp-media-player-0.8b-1.x86_64.rpm
-chmod +x artifacts/linux-appimage/AMP-0.8b-x86_64.AppImage
-./artifacts/linux-appimage/AMP-0.8b-x86_64.AppImage
+sudo dnf install ./artifacts/linux-rpm/amp-media-player-0.8.1b-1.x86_64.rpm
+chmod +x artifacts/linux-appimage/AMP-0.8.1b-x86_64.AppImage
+./artifacts/linux-appimage/AMP-0.8.1b-x86_64.AppImage
 ```
 
 Use a new output directory on each run. RPM installs the same `/opt/amp` application,

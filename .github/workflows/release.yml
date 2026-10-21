@@ -159,18 +159,22 @@ jobs:
           pattern: amp-release-*
           path: release
           merge-multiple: true
-      - name: Verify complete release set
+      - name: Verify and name complete release set
         run: |
           test -f "release/AMP-${VERSION}-setup.exe"
           test -f "release/amp-media-player_${VERSION}_amd64.deb"
           test -f "release/amp-media-player-${VERSION}-1.x86_64.rpm"
           test -f "release/AMP-${VERSION}-x86_64.AppImage"
+          cp "release/AMP-${VERSION}-setup.exe" "release/amp-${VERSION}-windows.exe"
+          cp "release/amp-media-player_${VERSION}_amd64.deb" "release/amp-${VERSION}.deb"
+          cp "release/amp-media-player-${VERSION}-1.x86_64.rpm" "release/amp-${VERSION}.rpm"
+          cp "release/AMP-${VERSION}-x86_64.AppImage" "release/amp-${VERSION}.AppImage"
           python tools/source_compliance.py --check-ready
           python tools/source_compliance.py --download "release/AMP-${VERSION}-corresponding-source"
           git archive --format=tar.gz --prefix="AMP-${VERSION}/" -o "release/AMP-${VERSION}-corresponding-source/AMP-${VERSION}-project-source.tar.gz" HEAD
           cp docs/SOURCE_DELIVERY.md "release/AMP-${VERSION}-corresponding-source/"
           tar -czf "release/AMP-${VERSION}-source.tar.gz" -C release "AMP-${VERSION}-corresponding-source"
-          (cd release && sha256sum "AMP-${VERSION}-setup.exe" "amp-media-player_${VERSION}_amd64.deb" "amp-media-player-${VERSION}-1.x86_64.rpm" "AMP-${VERSION}-x86_64.AppImage" "AMP-${VERSION}-source.tar.gz" > SHA256SUMS.txt && sha256sum --check SHA256SUMS.txt)
+          (cd release && sha256sum "amp-${VERSION}-windows.exe" "amp-${VERSION}.deb" "amp-${VERSION}.rpm" "amp-${VERSION}.AppImage" "AMP-${VERSION}-source.tar.gz" > SHA256SUMS.txt && sha256sum --check SHA256SUMS.txt)
       - name: Publish GitHub prerelease
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
@@ -180,10 +184,10 @@ jobs:
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: |
-            release/AMP-${{ needs.preflight.outputs.version }}-setup.exe
-            release/amp-media-player_${{ needs.preflight.outputs.version }}_amd64.deb
-            release/amp-media-player-${{ needs.preflight.outputs.version }}-1.x86_64.rpm
-            release/AMP-${{ needs.preflight.outputs.version }}-x86_64.AppImage
+            release/amp-${{ needs.preflight.outputs.version }}-windows.exe
+            release/amp-${{ needs.preflight.outputs.version }}.deb
+            release/amp-${{ needs.preflight.outputs.version }}.rpm
+            release/amp-${{ needs.preflight.outputs.version }}.AppImage
             release/AMP-${{ needs.preflight.outputs.version }}-source.tar.gz
             release/SHA256SUMS.txt
       - name: Request website manifest update
@@ -203,10 +207,10 @@ jobs:
                   "version": version,
                   "tag": f"v{version}",
                   "artifacts": {
-                      "windows": f"AMP-{version}-setup.exe",
-                      "linux_deb": f"amp-media-player_{version}_amd64.deb",
-                      "linux_rpm": f"amp-media-player-{version}-1.x86_64.rpm",
-                      "linux_appimage": f"AMP-{version}-x86_64.AppImage",
+                      "windows": f"amp-{version}-windows.exe",
+                      "linux_deb": f"amp-{version}.deb",
+                      "linux_rpm": f"amp-{version}.rpm",
+                      "linux_appimage": f"amp-{version}.AppImage",
                   },
               },
           }

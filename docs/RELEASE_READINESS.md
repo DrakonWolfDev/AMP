@@ -4,7 +4,7 @@ The source tree and packaging definitions are suitable for public development. B
 publication still requires platform-specific validation and completion of the dependency
 redistribution review described in `docs/LICENSING.md`.
 
-## Final 0.8b validation pass
+## Final 0.8.1b validation pass
 
 Candidate `f0bed107bdd836b62751f6e6369e205ecf63e2a8` passed the final two-platform
 [package/source build](https://github.com/DrakonWolfDev/AMP/actions/runs/39581705214),
@@ -67,7 +67,7 @@ the before/after snapshots, so no claim about all Windows diagnostic configurati
 
 ## Automated release path
 
-- Pushing a version-matched tag such as `v0.8b` runs `.github/workflows/release.yml`.
+- Pushing a version-matched tag such as `v0.8.1b` runs `.github/workflows/release.yml`.
 - Publication is deliberately blocked unless the repository variable
   `AMP_BINARY_RELEASE_APPROVED` is set to `true` after the checks below are complete.
 - The workflow builds Windows and Linux from the same tag, verifies Windows plus DEB, RPM and AppImage artifacts, publishes one
@@ -82,7 +82,7 @@ the before/after snapshots, so no claim about all Windows diagnostic configurati
 - Verify the exact generated inventory contains the native Windows Qt multimedia plugin and no
   libmpv or FFmpeg payload; see `CODEC_AUDIT.md` and `SOURCE_DELIVERY.md`.
 - Exercise the final GitHub artifacts' supported formats and GPU rendering on each clean target.
-- Version 0.8b will remain unsigned by decision. Label it clearly, publish SHA-256 hashes and
+- Version 0.8.1b will remain unsigned by decision. Label it clearly, publish SHA-256 hashes and
   retain build logs for the released artifacts.
 - Keep generated packages, machine reports, local media and credentials out of Git.
 
@@ -95,8 +95,7 @@ approval of candidate `f0bed107bdd836b62751f6e6369e205ecf63e2a8` to the new tree
 All three platform artifacts and their source bundle must be rebuilt from the
 same reviewed commit before treating it as the next release candidate.
 
-The tag-driven publication workflow remains Windows/DEB only. Do not set or
-reuse the release approval variable on the basis of the Fedora source smoke test.
-RPM desktop acceptance, GitHub preview results, final inventory/source review
-and the matching Windows/Mint regressions remain required before adding a third
-published asset and the website download mapping.
+The tag-driven publication workflow now requires and publishes Windows, DEB, RPM and
+AppImage artifacts from one commit. RPM desktop acceptance, GitHub preview results,
+final inventory/source review and the matching Windows/Mint regressions remain required
+before setting the release approval variable.

@@ -25,6 +25,6 @@ media plugin, leaving the native Windows media plugin as the only packaged playb
 Linux obtains libmpv and its codec stack from the distribution rather than from AMP's DEB, RPM or AppImage.
 The rebuilt Windows artifact still requires inventory inspection and clean-machine playback tests.
 
-Version 0.8b is intentionally unsigned. Release notes and the download page must say this
+Version 0.8.1b is intentionally unsigned. Release notes and the download page must say this
 plainly and publish SHA-256 checksums; signing is not represented as a remaining gate for this
 version.

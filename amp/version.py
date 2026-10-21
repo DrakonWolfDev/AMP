@@ -1,6 +1,6 @@
 from packaging.version import Version
 
-PUBLIC_VERSION = "0.8b"
+PUBLIC_VERSION = "0.8.1b"
 
 
 def display_version(value):

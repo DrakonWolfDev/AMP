@@ -90,7 +90,7 @@ class AboutDialog(ProjectDialog):
         try:
             release = display_version(version("andy-media-player"))
         except PackageNotFoundError:
-            release = "0.8b"
+            release = "0.8.1b"
         self.content.addWidget(label(f"DEVELOPMENT PREVIEW  ·  {release}", "dialogEyebrow"))
         links = QHBoxLayout()
         links.setSpacing(24)

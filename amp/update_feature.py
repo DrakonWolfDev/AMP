@@ -25,7 +25,7 @@ def current_version():
     try:
         return version("andy-media-player")
     except PackageNotFoundError:
-        return "0.8b"
+        return "0.8.1b"
 
 
 class UpdateFeatureMixin:

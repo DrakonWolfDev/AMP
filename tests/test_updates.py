@@ -29,9 +29,9 @@ def application():
 
 
 def test_public_beta_version_keeps_its_short_label():
-    assert display_version("0.8b0") == "0.8b"
-    assert display_version("0.8b") == "0.8b"
-    assert display_version("0.8b1") == "0.8b1"
+    assert display_version("0.8.1b0") == "0.8.1b"
+    assert display_version("0.8.1b") == "0.8.1b"
+    assert display_version("0.8.1b1") == "0.8.1b1"
 
 
 def test_amp_accepts_beta_update_notifications():
