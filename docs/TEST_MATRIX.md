@@ -178,3 +178,15 @@ Expected dimensions use Qt QSize rounding (half pixels up).
 The original Python-round implementation produced 832 rather than 833 at 150%; comparison with Qt caught this and the corrected run passed. Native-DPR fit/zoomed video and portrait captures were visually inspected for crop/aspect/bars and absent controls. OS compositor latency and exact monitor pixels have not been externally compared.
 
 Reproduction commands are in README.md. The session harness enters real Qt event loops to allow libmpv worker callbacks to run. Desktop probes require a visible desktop. CI defines unit/static checks only and does not prove renderer behaviour.
+
+
+## Fedora 44 preview, 21 October 2026
+
+The Fedora x86_64 RPM additions and local evidence are tracked in
+[Fedora release review](FEDORA_RELEASE_REVIEW.md). Unit/static checks, frozen
+Wayland software rendering, clean Fedora container install/verify/runtime/removal,
+and an offline fresh installed-wheel run passed. Container tests use VP9/AAC;
+the development host's H.264 availability does not imply stock HEVC support.
+Physical GPU/audio/scaling, packaged Dolphin SMB, desktop associations/default
+preservation and RPM upgrade remain acceptance checks. The new GitHub preview
+job and Windows/Mint packages must be built from the same reviewed commit.

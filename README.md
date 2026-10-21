@@ -1,6 +1,6 @@
 # AMP — Andy’s Media Player
 
-A small, private-by-design desktop player for local images, videos and music on Linux Mint and Windows.
+A small, private-by-design desktop player for local images, videos and music on Linux Mint and Windows, with preview packaging for Fedora 44.
 
 AMP will fit media to the viewport, offer cursor-focused zoom and drag-pan, browse neighbouring files, and save the visible media viewport as a PNG. Video playback and each window's state remain independent. No accounts, telemetry, cloud services, or media library scans.
 
@@ -52,6 +52,31 @@ python -m amp /path/to/media.mp4
 ```
 
 Qt's xcb plugin may need distribution packages such as `libxcb-cursor0`.
+
+## Fedora source setup and KDE network drops
+
+On Fedora, install `mpv-libs`, then use the Linux development setup above
+(`pip install -e .` is sufficient for running without developer tools).
+Qt may also need `libglvnd-egl`, `libglvnd-opengl`, `libglvnd-glx`,
+`xcb-util-cursor` and `libxkbcommon-x11`.
+
+On Linux, AMP accepts SMB files dragged from Dolphin and asks the session's
+[KDE KIO FUSE service](https://github.com/KDE/kio-fuse#usage) to expose the selected
+file through a filesystem path. Fedora provides this service in `kio-fuse`.
+Restart AMP after updating the source, then drag a media file from the share.
+Drop a file rather than its containing folder. Existing mounted filesystem
+paths continue to work. Other remote URL schemes are not accepted.
+
+KDE handles share authentication and mounting. AMP does not save the SMB URL or
+credentials, and does not display raw service errors. Accessing media and its
+neighbours/companions involves the selected file server; KIO FUSE may use local
+caching under KDE's control. No AMP upload or background library scan is added.
+Fedora desktop playback and real-share drops still need manual verification.
+
+For an unsigned Fedora RPM preview and its outstanding acceptance checks, see
+[packaging instructions](docs/PACKAGING.md#fedora-44-rpm-preview-x86_64) and the
+[Fedora release review](docs/FEDORA_RELEASE_REVIEW.md). The RPM is an upstream
+download, not a package accepted into Fedora's official repositories.
 
 ## Controls
 

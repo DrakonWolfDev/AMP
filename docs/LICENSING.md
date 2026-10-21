@@ -28,3 +28,24 @@ source sets are pinned and mapped. A Windows package must still pass its invento
 clean-machine Media Foundation playback tests before publication is approved.
 
 References: [AGPLv3](https://www.gnu.org/licenses/agpl-3.0.html), [Qt licensing](https://doc.qt.io/qt-6/licensing.html), [mpv Copyright](https://github.com/mpv-player/mpv/blob/master/Copyright), [FFmpeg legal guidance](https://ffmpeg.org/legal.html).
+
+## Fedora and optional KDE SMB integration
+
+Running a private source checkout on Fedora does not itself create a new binary
+release or a requirement to publish that private checkout. See the
+[GNU licensing FAQ](https://www.gnu.org/licenses/gpl-faq.html#NoDistributionRequirements).
+Reading a user-selected SMB file is client access to a file server, not offering
+AMP as a remote application service.
+
+SMB drops optionally call the separately installed KDE KIO FUSE service over the
+session D-Bus interface using the existing PySide6 QtDBus module. AMP does not
+bundle KIO FUSE, KDE KIO, Samba, or additional codecs. No new Python dependency is
+introduced. The interface is documented in the
+[KIO FUSE usage guide](https://github.com/KDE/kio-fuse#usage).
+
+Before distributing a Fedora RPM or frozen build, apply the existing release
+audit to its actual included libraries and plugins, preserve notices and
+corresponding source as required, and review the chosen libmpv/FFmpeg build and
+codec-patent position. Do not assume a Fedora package or a third-party codec
+repository provides blanket redistribution or patent clearance. Adding a Fedora
+runtime setup guide does not establish that a Fedora binary release is audited.

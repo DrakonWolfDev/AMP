@@ -147,7 +147,14 @@ def main():
                 not any("/artifacts/" in n or "/.venv/" in n or "/.git/" in n for n in names),
                 "Source archive excludes local media, environments and Git internals",
             )
-        runtime_names = {"pyside6-essentials", "shiboken6", "python-mpv", "pyopengl", "mutagen"}
+        runtime_names = {
+            "pyside6-essentials",
+            "shiboken6",
+            "python-mpv",
+            "pyopengl",
+            "mutagen",
+            "packaging",
+        }
         wheels = output / "wheelhouse"
         wheels.mkdir()
         shutil.copyfile(wheel, wheels / wheel.name)
@@ -156,7 +163,7 @@ def main():
             if metadata["name"].lower().replace("_", "-") in runtime_names:
                 shutil.copyfile(path, wheels / path.name)
         inventory = [wheel_metadata(p) for p in sorted(wheels.glob("*.whl"))]
-        check(len(inventory) == 6, "Runtime wheelhouse has AMP and exactly five dependencies")
+        check(len(inventory) == 7, "Runtime wheelhouse has AMP and exactly six dependencies")
         lock = output / "requirements-runtime.txt"
         lock.write_text(
             "\n".join(f"{p['name']}=={p['version']} --hash=sha256:{p['sha256']}" for p in inventory)

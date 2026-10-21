@@ -10,6 +10,7 @@ import imageio_ffmpeg
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--video-codec", choices=("libx264", "libvpx-vp9"), default="libx264")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
@@ -29,7 +30,7 @@ def main():
             "-t",
             "8",
             "-c:v",
-            "libx264",
+            args.video_codec,
             "-pix_fmt",
             "yuv420p",
             "-c:a",

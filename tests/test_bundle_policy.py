@@ -37,3 +37,9 @@ def test_allows_required_amp_opengl_and_media_foundation_files():
     assert not forbidden_runtime_file("_internal/PySide6/Qt6OpenGL.dll")
     assert not forbidden_runtime_file("_internal/PySide6/Qt6Multimedia.dll")
     assert not forbidden_runtime_file("_internal/PySide6/plugins/multimedia/windowsmediaplugin.dll")
+
+
+def test_rejects_versioned_linux_decoder_libraries():
+    for name in ("libmpv.so", "libmpv.so.2", "libmpv.so.2.5.0", "libavcodec.so.62"):
+        assert forbidden_runtime_file(f"_internal/{name}")
+    assert not forbidden_runtime_file("_internal/LICENSES/libmpv-Copyright.txt")

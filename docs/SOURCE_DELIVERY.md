@@ -17,12 +17,12 @@ Foundation through Qt Multimedia and does not redistribute libmpv or FFmpeg. Bui
 
 ## Current position
 
-The Python dependency, PySide6/shiboken6, Qt Base, Qt SVG, Qt Multimedia and Qt Wayland source archives are
+The Python dependency, PySide6/shiboken6, Qt Base, Qt SVG, Qt Image Formats, Qt Multimedia, Qt Wayland and ICU source archives are
 pinned by official URL and SHA-256. `QT_REDISTRIBUTION.md` maps the Qt archives to the observed
 bundle inventory. The Windows inventory gate rejects libmpv, FFmpeg libraries and Qt's FFmpeg
 media plugin, leaving the native Windows media plugin as the only packaged playback backend.
 
-Linux obtains libmpv and its codec stack from the distribution rather than from AMP's `.deb`.
+Linux obtains libmpv and its codec stack from the distribution rather than from AMP's `.deb` or Fedora `.rpm`.
 The rebuilt Windows artifact still requires inventory inspection and clean-machine playback tests.
 
 Version 0.8b is intentionally unsigned. Release notes and the download page must say this

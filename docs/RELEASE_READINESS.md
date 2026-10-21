@@ -85,3 +85,18 @@ the before/after snapshots, so no claim about all Windows diagnostic configurati
 - Version 0.8b will remain unsigned by decision. Label it clearly, publish SHA-256 hashes and
   retain build logs for the released artifacts.
 - Keep generated packages, machine reports, local media and credentials out of Git.
+
+## Fedora 44 candidate addition
+
+The working tree now adds an unsigned upstream x86_64 RPM preview and a Fedora
+job to Package previews. The local results and remaining acceptance requirements
+are in [Fedora release review](FEDORA_RELEASE_REVIEW.md). This does not extend the
+approval of candidate `f0bed107bdd836b62751f6e6369e205ecf63e2a8` to the new tree.
+All three platform artifacts and their source bundle must be rebuilt from the
+same reviewed commit before treating it as the next release candidate.
+
+The tag-driven publication workflow remains Windows/DEB only. Do not set or
+reuse the release approval variable on the basis of the Fedora source smoke test.
+RPM desktop acceptance, GitHub preview results, final inventory/source review
+and the matching Windows/Mint regressions remain required before adding a third
+published asset and the website download mapping.

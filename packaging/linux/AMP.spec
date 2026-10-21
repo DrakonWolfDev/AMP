@@ -25,7 +25,7 @@ a = Analysis(
     [str(root / "packaging/linux/entry.py")],
     pathex=[str(root)],
     datas=data,
-    hiddenimports=["mpv", "OpenGL.platform.glx"],
+    hiddenimports=["mpv", "OpenGL.platform.glx", "OpenGL.platform.egl", "PySide6.QtDBus"],
     excludes=[
         "PySide6.QtMultimedia",
         "PySide6.QtPdf",

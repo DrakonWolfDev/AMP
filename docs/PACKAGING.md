@@ -30,6 +30,45 @@ host's FFmpeg/libmpv stack and lets the package manager apply system security up
 The package declares Qt's X11 cursor, ICCCM, key-symbol and xkbcommon-X11 runtime
 dependencies, including on systems that do not already have a full desktop dependency set.
 
+## Fedora 44 RPM preview (x86_64)
+
+Build on Fedora 44 x86_64, using its system Python (currently 3.14), not on Mint
+or Ubuntu. The builder rejects other target releases and architectures.
+
+```sh
+sudo dnf install python3 python3-devel binutils rpm-build desktop-file-utils mpv-libs libglvnd-egl libglvnd-opengl libglvnd-glx xcb-util-cursor xcb-util-wm xcb-util-keysyms xcb-util-image xcb-util-renderutil libxkbcommon-x11
+python3 -m venv .venv
+.venv/bin/python -m pip install -e '.[dev]'
+.venv/bin/python -m pip install -r requirements-linux-build.txt
+.venv/bin/python tools/build_linux_rpm.py --output artifacts/fedora-rpm
+sudo dnf install ./artifacts/fedora-rpm/*.rpm
+```
+
+The builder shares the frozen runtime, inventory gate, notices and desktop layout
+with the Debian builder. It produces an unsigned upstream RPM such as
+`amp-media-player-0.8~b0-1.fc44.x86_64.rpm`. The `~b0` suffix sorts this Python beta
+before the final `0.8` RPM version. Private Qt/Python libraries do not become
+system library providers; their requirements are filtered only where the matching
+library is present in the bundle. Automatic system ABI requirements are retained
+and checked, alongside explicit libmpv/OpenGL/X11 plugin dependencies.
+
+KDE SMB drops use the optional system `kio-fuse` service (`sudo dnf install
+kio-fuse` if absent); AMP does not bundle KDE KIO or Samba. The system libmpv
+build determines codec availability. Stock Fedora HEVC support is not guaranteed;
+AMP does not enable extra repositories or install codec packs. A VP9/AAC fixture
+is available with `tools/release_fixtures.py --video-codec libvpx-vp9` for stock
+Fedora tests. H.264/HEVC acceptance must identify the actual system decoder set.
+
+To remove the preview, use `sudo dnf remove amp-media-player`. Like the Debian
+package, it leaves existing file defaults alone and uses desktop/icon file
+triggers supplied by Fedora. Preferences and user-created screenshots are not
+removed. Do not install both AMP's DEB and RPM on one system.
+
+This frozen upstream RPM is not a Fedora package collection submission. Such a
+submission would need a separate packaging review, including the distribution's
+bundling and licence-expression requirements. See
+[Fedora release review](FEDORA_RELEASE_REVIEW.md) for tested scope and remaining gates.
+
 ## Windows installer
 
 Windows binaries must be built on a 64-bit Windows host; PyInstaller output is
@@ -57,8 +96,8 @@ native Windows Media Foundation plugin. The build rejects libmpv, FFmpeg DLLs an
 
 ## GitHub preview builds
 
-Run **Package previews** from the repository's Actions tab to build Linux amd64 and Windows x64
-test artifacts from the selected commit. The workflow does not publish a release. Download both
+Run **Package previews** from the repository's Actions tab to build Mint/Ubuntu amd64,
+Fedora 44 x86_64 and Windows x64 test artifacts from the selected commit. The workflow does not publish a release. Download the platform
 artifacts and perform the clean-machine checks above. GitHub's Windows runner is non-interactive,
 so its build explicitly skips the standalone GL/media smoke test and records that fact in
 `report.json`; this is not a substitute for testing the installer on a desktop.
@@ -68,3 +107,11 @@ Linux packaged smoke results from Xvfb, and a separate hash-verified correspondi
 containing the exact project commit. The smoke fixtures are generated locally by
 `tools/release_fixtures.py`; their FFmpeg generator is a development dependency and is excluded
 from application bundles. The test does not imply that AMP ships FFmpeg.
+
+The Fedora preview job builds inside `fedora:44`, installs the RPM with DNF,
+checks the installed runtime under Xvfb using a VP9/AAC fixture, verifies RPM
+file integrity and removes the package. Reports and hashes accompany the RPM.
+This does not replace physical Fedora desktop, audible audio, Dolphin/KIO,
+Open With, upgrade or hardware/scaling checks. The tag-driven release workflow
+still publishes only Windows and Debian artifacts; add the Fedora asset and
+website manifest entry only after the RPM acceptance gates are complete.
