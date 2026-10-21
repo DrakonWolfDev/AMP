@@ -78,12 +78,12 @@ jobs:
       - name: Install pinned build dependencies
         shell: powershell
         run: |
-          ./.venv/Scripts/python.exe -m pip install -r requirements-windows-build.txt
+          ./.venv-windows/Scripts/python.exe -m pip install -r requirements-windows-build.txt
           choco upgrade innosetup --version=6.7.3 --allow-downgrade -y
       - name: Build Windows installer
         shell: powershell
         run: |
-          ./.venv/Scripts/python.exe tools/build_windows_preview.py `
+          ./.venv-windows/Scripts/python.exe tools/build_windows_preview.py `
             --output artifacts/release-windows `
             --iscc "C:/Program Files (x86)/Inno Setup 6/ISCC.exe" `
             --skip-standalone-smoke

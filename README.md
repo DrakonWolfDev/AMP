@@ -14,12 +14,16 @@ powershell -ExecutionPolicy Bypass -File tools/setup_windows.ps1
 .\AMP.cmd "C:\path\to\media.mp4"
 ```
 
-Setup creates `.venv` and installs the pinned Python dependencies. Windows video and audio
+Setup creates `.venv-windows` and installs the pinned Python dependencies. Linux keeps
+its separate `.venv`, so a shared checkout can be used on both operating systems.
+Setup finds a Windows Python installation on PATH or in uv's default managed directory.
+To select one explicitly, add `-Python "C:\path\to\python.exe"` to the setup command.
+Windows video and audio
 playback use the operating system's Media Foundation codecs; AMP does not download or bundle
 libmpv or FFmpeg. The underlying launch command is:
 
 ```powershell
-.\.venv\Scripts\python -m amp
+.\.venv-windows\Scripts\python -m amp
 ```
 
 ## Install on Linux Mint
@@ -111,28 +115,28 @@ The media fills the canvas. Small floating icon controls and the filename fade a
 ## Checks
 
 ```powershell
-.\.venv\Scripts\python -m pytest -q
-.\.venv\Scripts\python -m ruff check amp tools tests
-.\.venv\Scripts\python -m ruff format --check amp tools tests
+.\.venv-windows\Scripts\python -m pytest -q
+.\.venv-windows\Scripts\python -m ruff check amp tools tests
+.\.venv-windows\Scripts\python -m ruff format --check amp tools tests
 # Requires a visible Windows desktop and dev dependencies:
-.\.venv\Scripts\python -m tools.render_probe
-.\.venv\Scripts\python -m tools.session_probe
-.\.venv\Scripts\python -m tools.music_probe
-.\.venv\Scripts\python -m tools.music_presentation_probe
-.\.venv\Scripts\python -m tools.navigation_probe
-.\.venv\Scripts\python -m tools.image_probe
-.\.venv\Scripts\python -m tools.playback_probe
-.\.venv\Scripts\python -m tools.capture_probe
-.\.venv\Scripts\python -m tools.ui_probe
-.\.venv\Scripts\python -m tools.style_probe
-.\.venv\Scripts\python -m tools.browser_probe
-.\.venv\Scripts\python -m tools.dialog_probe
-.\.venv\Scripts\python -m tools.interaction_probe
-.\.venv\Scripts\python -m tools.hover_probe
-.\.venv\Scripts\python -m tools.resilience_probe
-.\.venv\Scripts\python -m tools.process_probe
+.\.venv-windows\Scripts\python -m tools.render_probe
+.\.venv-windows\Scripts\python -m tools.session_probe
+.\.venv-windows\Scripts\python -m tools.music_probe
+.\.venv-windows\Scripts\python -m tools.music_presentation_probe
+.\.venv-windows\Scripts\python -m tools.navigation_probe
+.\.venv-windows\Scripts\python -m tools.image_probe
+.\.venv-windows\Scripts\python -m tools.playback_probe
+.\.venv-windows\Scripts\python -m tools.capture_probe
+.\.venv-windows\Scripts\python -m tools.ui_probe
+.\.venv-windows\Scripts\python -m tools.style_probe
+.\.venv-windows\Scripts\python -m tools.browser_probe
+.\.venv-windows\Scripts\python -m tools.dialog_probe
+.\.venv-windows\Scripts\python -m tools.interaction_probe
+.\.venv-windows\Scripts\python -m tools.hover_probe
+.\.venv-windows\Scripts\python -m tools.resilience_probe
+.\.venv-windows\Scripts\python -m tools.process_probe
 # Optional: saves two verification PNGs into the real OS Pictures/AMP folder:
-.\.venv\Scripts\python -m tools.capture_probe --native-pictures
+.\.venv-windows\Scripts\python -m tools.capture_probe --native-pictures
 ```
 
 The renderer probe generates synthetic local fixtures and PNGs in ignored `artifacts/probe`. Run it before the session probe. The UI and resilience probes also use playback_probe fixtures; run playback_probe first. The process probe uses resilience_probe fixtures. On this native 125% display, `QT_SCALE_FACTOR=0.8` and `1.2` exercise effective DPR 1 and 1.5; use `--output artifacts/probe-100` or `--output artifacts/probe-150` to retain separate reports. These environment overrides do not test changing OS display settings or moving between monitors. CI runs source checks and unit tests, not desktop renderer probes.
@@ -147,7 +151,11 @@ The manually triggered **Package previews** GitHub Actions workflow builds an am
 - [Technical risks](docs/TECHNICAL_RISKS.md): renderer gate and open decisions.
 - [Test matrix](docs/TEST_MATRIX.md): planned platform checks.
 
-The stack is Python, PySide6/Qt 6, PyOpenGL for readback and Mutagen for local music tags. Windows uses Qt's native Media Foundation backend; Linux uses python-mpv with the distribution's libmpv. All media operations are local. There is no analytics, database or background media scan. A manual update check contacts GitHub only when selected. Optional automatic checks are disabled by default and require confirmation; when enabled they read public AMP release metadata from GitHub at most once every 24 hours. AMP never sends media paths or usage data and never downloads or installs an update. No diagnostics log is written. Preferences are stored in Qt's local AppConfigLocation: `%LOCALAPPDATA%/AMP/AMP/preferences.ini` on Windows and `${XDG_CONFIG_HOME:-~/.config}/AMP/AMP/preferences.ini` on Linux. No media paths or playback history are stored. Delete this file while AMP is closed to restore defaults.
+The stack is Python, PySide6/Qt 6, PyOpenGL for readback and Mutagen for local music tags. Windows uses Qt's native Media Foundation backend; Linux uses python-mpv with the distribution's libmpv.
+
+**AMP processes your media locally and does not upload your files or collect playback analytics.** Optional update checks contact GitHub. Windows playback uses system media components; Windows diagnostics and other operating-system activity are governed by your Windows settings and are outside AMP's control. Opening media on a network share or in a cloud-backed folder can involve its server or sync provider. See the [privacy statement and test limits](docs/PRIVACY.md).
+
+There is no analytics, database or background media scan. A manual update check contacts GitHub only when selected. Optional automatic checks are disabled by default and require confirmation; when enabled they read public AMP release metadata from GitHub at most once every 24 hours. AMP's update requests contain no media paths or playback history; AMP never downloads or installs an update. No diagnostics log is written during ordinary use. Preferences are stored in Qt's local AppConfigLocation: `%LOCALAPPDATA%/AMP/AMP/preferences.ini` on Windows and `${XDG_CONFIG_HOME:-~/.config}/AMP/AMP/preferences.ini` on Linux. No media paths or playback history are stored. Delete this file while AMP is closed to restore defaults.
 
 AMP is licensed under the [GNU Affero General Public License, version 3 only](LICENSE) (`AGPL-3.0-only`). Copyright © 2026 Andrew Hodgson trading as Wolf Forge. Dependencies retain their own licences; see [third-party notices](THIRD_PARTY_NOTICES.md), the [codec and bundle audit](docs/CODEC_AUDIT.md), the [Qt redistribution record](docs/QT_REDISTRIBUTION.md), the [source-delivery plan](docs/SOURCE_DELIVERY.md), and the [licensing policy](docs/LICENSING.md). The Windows bundle excludes libmpv, FFmpeg and Qt's FFmpeg media plugin; corresponding Qt sources are pinned. The audit is not legal advice or patent clearance. Version 0.8b is intentionally unsigned and must be distributed with published SHA-256 checksums.
 

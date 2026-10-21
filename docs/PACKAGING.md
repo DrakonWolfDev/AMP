@@ -35,8 +35,8 @@ platform-specific and Inno Setup is a Windows compiler. Prepare the development 
 as described in the README, then run:
 
 ```powershell
-.\.venv\Scripts\python -m pip install -r requirements-build.txt
-.\.venv\Scripts\python tools\build_windows_preview.py `
+.\.venv-windows\Scripts\python -m pip install -r requirements-build.txt
+.\.venv-windows\Scripts\python tools\build_windows_preview.py `
   --output artifacts\windows-build `
   --iscc "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
 ```
@@ -60,3 +60,9 @@ test artifacts from the selected commit. The workflow does not publish a release
 artifacts and perform the clean-machine checks above. GitHub's Windows runner is non-interactive,
 so its build explicitly skips the standalone GL/media smoke test and records that fact in
 `report.json`; this is not a substitute for testing the installer on a desktop.
+
+The preview artifacts include the exact Windows frozen runtime ZIP for desktop self-testing,
+Linux packaged smoke results from Xvfb, and a separate hash-verified corresponding-source archive
+containing the exact project commit. The smoke fixtures are generated locally by
+`tools/release_fixtures.py`; their FFmpeg generator is a development dependency and is excluded
+from application bundles. The test does not imply that AMP ships FFmpeg.

@@ -9,6 +9,7 @@ data = [
     (str(root / "LICENSES"), "LICENSES"),
     (str(root / "amp/assets"), "amp/assets"),
 ]
+data += [(str(root / "docs" / name), "docs") for name in ("PRIVACY.md", "CODEC_AUDIT.md")]
 for name in (
     "andy-media-player",
     "PySide6-Essentials",

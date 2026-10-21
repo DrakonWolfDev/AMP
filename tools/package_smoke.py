@@ -7,6 +7,7 @@ import platform
 import sys
 import threading
 import traceback
+import wave
 from contextlib import suppress
 from pathlib import Path
 
@@ -36,7 +37,8 @@ def main():
     app = create_application()
     app.setQuitOnLastWindowClosed(False)
     preferences = Preferences(output / "unused-preferences.ini")
-    preferences.volume, preferences.repeat = 0, False
+    preferences.volume = 0
+    preferences.repeat_music = preferences.repeat_video = False
     first, second = Window(preferences), Window(preferences)
     report = {
         "checks": [],
@@ -81,6 +83,8 @@ def main():
     try:
         first.show()
         second.show()
+        first.move(40, 40)
+        second.move(550, 100)
         wait(300)
         check(first.viewport.isValid(), "Blank installed application creates a valid GL viewport")
         package_names = {name.lower().replace("_", "-") for name, _ in report["packages"]}
@@ -113,11 +117,31 @@ def main():
         first.video_set("mute", True)
         check(second.open_path(args.video), "A second installed window opens video independently")
         second.video_set("mute", True)
-        wait(900)
+        for _ in range(60):
+            wait(100)
+            if first.viewport.render_count > 3 and second.viewport.render_count > 3:
+                break
+        report["video_render_counts"] = [first.viewport.render_count, second.viewport.render_count]
         check(
             first.viewport.render_count > 3 and second.viewport.render_count > 3,
             "Minimal runtime renders two live videos",
         )
+        if args.video.with_suffix(".srt").is_file():
+            first.pause()
+            first.seek(1, "absolute")
+            wait(300)
+            check(bool(first.viewport.subtitle_text), "Packaged player resolves a local SRT cue")
+            first.viewport.set_subtitles_visible(True)
+            wait(100)
+            visible = first.viewport.capture()
+            first.viewport.set_subtitles_visible(False)
+            wait(100)
+            hidden = first.viewport.capture()
+            check(visible != hidden, "Subtitle visibility changes the composited framebuffer")
+            visible.save(str(output / "subtitles-visible.png"))
+            hidden.save(str(output / "subtitles-hidden.png"))
+            first.viewport.set_subtitles_visible(True)
+            first.pause()
         first.pause()
         first.seek(2, "absolute")
         wait(200)
@@ -141,6 +165,23 @@ def main():
             first.viewport.audio and core(first, ("time-pos",))["time-pos"] > 0,
             "Installed music playback advances",
         )
+        tracks = output / "eof-tracks"
+        tracks.mkdir(exist_ok=True)
+        for name in ("01.wav", "02.wav"):
+            with wave.open(str(tracks / name), "wb") as stream:
+                stream.setparams((1, 2, 44100, 0, "NONE", "not compressed"))
+                stream.writeframes(b"\0\0" * 44100)
+        check(first.open_path(tracks / "01.wav"), "Packaged player opens EOF test music")
+        advanced = False
+        for _ in range(60):
+            wait(100)
+            if (
+                first.current_path == tracks / "02.wav"
+                and core(first, ("time-pos",))["time-pos"] > 0
+            ):
+                advanced = True
+                break
+        check(advanced, "Natural music EOF starts and advances the next track")
         count = second.viewport.render_count
         first.close()
         wait(200)

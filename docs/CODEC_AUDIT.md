@@ -17,6 +17,15 @@ This is an engineering compliance record, not legal advice or patent clearance.
 The former Windows `libmpv-2.dll` distribution path has been removed from setup, dependencies,
 the PyInstaller specification, release preflight and source manifests. Linux remains unchanged.
 
+## Patent scope
+
+Using Windows' installed codecs and Linux distribution packages avoids redistributing those
+decoder implementations inside AMP. This is a packaging choice, not a universal patent licence
+or a claim that patent rights have been bypassed. AMP does not install codec packs or download
+missing decoders. Codec availability and applicable rights depend on the system components,
+intended use and distribution territories. Software-licence notices and this statement do not
+replace an assessment of applicable codec-patent requirements.
+
 ## Redistributed source and notices
 
 The Windows application redistributes PySide6 Addons, Qt Multimedia and Qt's native Windows media

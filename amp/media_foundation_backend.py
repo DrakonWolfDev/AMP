@@ -5,7 +5,7 @@
 
 import os
 
-from PySide6.QtCore import QObject, QUrl, Signal
+from PySide6.QtCore import QObject, Qt, QUrl, Signal, Slot
 
 # Select the native Windows backend before the first multimedia object is made.
 # The Windows bundle deliberately excludes Qt's FFmpeg plugin and libraries.
@@ -30,6 +30,7 @@ class MediaFoundationBackend(QObject):
     load_ready = Signal(int, object)
     music_ready = Signal(int, object)
     playback_ended = Signal(int)
+    _end_pending = Signal(int)
     frame_ready = Signal(object)
 
     def __init__(self, parent=None):
@@ -43,6 +44,7 @@ class MediaFoundationBackend(QObject):
         self.token = 0
         self.version = "Windows Media Foundation"
         self._mute = False
+        self._end_pending.connect(self._finish_playback, Qt.ConnectionType.QueuedConnection)
 
         self.player.positionChanged.connect(
             lambda value: self.changed.emit("time-pos", value / 1000)
@@ -78,10 +80,21 @@ class MediaFoundationBackend(QObject):
                 },
             )
         elif status == QMediaPlayer.MediaStatus.EndOfMedia:
-            self.changed.emit("eof-reached", True)
-            self.playback_ended.emit(self.token)
+            # Qt's Windows backend emits this status before setting StoppedState.
+            # Loading the next source here lets that trailing stop affect it.
+            self._end_pending.emit(self.token)
         elif status == QMediaPlayer.MediaStatus.InvalidMedia:
             self.load_failed.emit(self.token, "This media could not be decoded by Windows.")
+
+    @Slot(int)
+    def _finish_playback(self, token):
+        if (
+            not self.closed
+            and token == self.token
+            and self.player.mediaStatus() == QMediaPlayer.MediaStatus.EndOfMedia
+        ):
+            self.changed.emit("eof-reached", True)
+            self.playback_ended.emit(token)
 
     def _error(self, _error, message):
         if not self.closed:

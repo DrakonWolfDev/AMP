@@ -6,6 +6,7 @@ from PyInstaller.utils.hooks import copy_metadata
 root = Path(SPECPATH).parents[1]
 data = [(str(root / "LICENSE"), "."), (str(root / "THIRD_PARTY_NOTICES.md"), "."), (str(root / "LICENSES"), "LICENSES")]
 data += [(str(root / "amp/assets"), "amp/assets")]
+data += [(str(root / "docs" / name), "docs") for name in ("PRIVACY.md", "CODEC_AUDIT.md")]
 for name in ("andy-media-player", "PySide6-Essentials", "PySide6-Addons", "shiboken6", "PyOpenGL", "mutagen", "packaging"):
     data += copy_metadata(name)
 

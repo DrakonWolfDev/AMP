@@ -1,4 +1,14 @@
-# Test matrix — 2026-10-20
+# Test matrix — 2026-10-21
+
+## Final source checks — 2026-10-21
+
+The Windows source environment passes all 135 unit tests, Ruff lint/format and dependency
+checks. The real-window source smoke test passes 17 checks through Windows Media Foundation,
+including local SRT framebuffer composition, natural EOF advancement to a second WAV track,
+two independent video windows, screenshots and decoder shutdown. The user also confirmed
+music advancement in the source application. Windows source setup now uses `.venv-windows`,
+leaving Linux's `.venv` intact. These results precede the final packaged candidate; final
+artifact results must be recorded separately and do not inherit a blanket acceptance claim.
 
 > Windows playback has changed from bundled libmpv to Qt's native Media Foundation backend.
 > Windows results below describe the former renderer unless explicitly rerun and marked as Media

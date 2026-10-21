@@ -4,6 +4,25 @@ The source tree and packaging definitions are suitable for public development. B
 publication still requires platform-specific validation and completion of the dependency
 redistribution review described in `docs/LICENSING.md`.
 
+## Final 0.8b validation pass
+
+The release candidate includes the Linux subtitle compositing fix, deferred Windows EOF
+handoff, and separate Windows/Linux source environments. The documented privacy boundary is
+in `PRIVACY.md`; the system-codec packaging choice and patent limits are in `CODEC_AUDIT.md`.
+Both documents accompany the frozen applications. This wording does not assert patent clearance.
+
+The Package previews workflow builds both platforms from the selected commit, prepares the
+hash-verified corresponding-source set, and exercises the extracted Linux package under Xvfb.
+Its packaged smoke test checks subtitle composition and natural music advancement as well as
+images, two-window video, screenshots and shutdown. The exact frozen Windows runtime is also
+retained for desktop smoke testing after download. These checks do not replace clean-target
+installer, association, audible-output or physical Mint/Windows desktop acceptance.
+
+The 21 October Windows privacy observation concerns the previously installed development
+build, not automatically the new candidate. No AMP-attributed internet connection or DNS request
+was identified; network-share music reads were observed. Windows diagnostics were stopped in
+the before/after snapshots, so no claim about all Windows diagnostic configurations is made.
+
 ## Linux
 
 - The amd64 Debian builder runs tests and static checks, freezes AMP, rejects accidentally
