@@ -177,7 +177,7 @@ def main():
             wait(100)
             if (
                 first.current_path == tracks / "02.wav"
-                and core(first, ("time-pos",))["time-pos"] > 0
+                and (core(first, ("time-pos",))["time-pos"] or 0) > 0
             ):
                 advanced = True
                 break
