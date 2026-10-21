@@ -62,7 +62,7 @@ jobs:
     steps:
       - name: Install Fedora build and desktop test dependencies
         run: |
-          dnf install -y git python3 python3-devel python3-pip binutils rpm-build desktop-file-utils mpv-libs libglvnd-egl libglvnd-opengl libglvnd-glx xcb-util-cursor xcb-util-wm xcb-util-keysyms xcb-util-image xcb-util-renderutil libxkbcommon-x11 mesa-dri-drivers xorg-x11-server-Xvfb xauth pulseaudio pulseaudio-utils cpio findutils which tar gzip
+          dnf install -y git python3 python3-devel python3-pip binutils rpm-build desktop-file-utils mpv-libs libglvnd-egl libglvnd-opengl libglvnd-glx xcb-util-cursor xcb-util-wm xcb-util-keysyms xcb-util-image xcb-util-renderutil libxkbcommon-x11 mesa-dri-drivers xorg-x11-server-Xvfb xauth pulseaudio pulseaudio-utils cpio findutils which tar gzip shadow-utils util-linux
       - uses: actions/checkout@v4
       - name: Install pinned application and build tools
         run: |
@@ -75,9 +75,15 @@ jobs:
         run: |
           .venv/bin/python tools/release_fixtures.py --output artifacts/fedora-fixtures --video-codec libvpx-vp9
           dnf install -y artifacts/github-fedora/*.rpm
-          pulseaudio --start --exit-idle-time=-1
-          pactl load-module module-null-sink sink_name=amp_test
-          xvfb-run -a env LIBGL_ALWAYS_SOFTWARE=1 QT_QPA_PLATFORM=xcb PULSE_SINK=amp_test /usr/bin/amp --self-test --output artifacts/fedora-package-smoke --video "$PWD/artifacts/fedora-fixtures/av.mp4" --music "$PWD/artifacts/fedora-fixtures/tone.wav"
+          useradd --create-home --home-dir /tmp/amp-smoke-home amp-smoke
+          install -d -m 700 -o amp-smoke -g amp-smoke /tmp/amp-smoke-runtime
+          install -d -m 755 -o amp-smoke -g amp-smoke artifacts/fedora-package-smoke
+          runuser -u amp-smoke -- env HOME=/tmp/amp-smoke-home XDG_RUNTIME_DIR=/tmp/amp-smoke-runtime bash -euc '
+            pulseaudio --start --exit-idle-time=-1
+            trap "pulseaudio --kill || true" EXIT
+            pactl load-module module-null-sink sink_name=amp_test
+            xvfb-run -a env LIBGL_ALWAYS_SOFTWARE=1 QT_QPA_PLATFORM=xcb PULSE_SINK=amp_test /usr/bin/amp --self-test --output "$1" --video "$2" --music "$3"
+          ' amp-smoke "$PWD/artifacts/fedora-package-smoke" "$PWD/artifacts/fedora-fixtures/av.mp4" "$PWD/artifacts/fedora-fixtures/tone.wav"
           rpm -V amp-media-player
           dnf remove -y amp-media-player
           test ! -e /opt/amp/AMP
