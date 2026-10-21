@@ -1,5 +1,23 @@
 # Test matrix — 2026-10-21
 
+## Final packaged candidate and Windows acceptance — 2026-10-21
+
+[Package preview run 39581705214](https://github.com/DrakonWolfDev/AMP/actions/runs/39581705214)
+passed Windows, Linux and corresponding-source jobs at commit
+`f0bed107bdd836b62751f6e6369e205ecf63e2a8`. Windows passed 136 unit tests; Linux passed
+131 with one Windows-specific module skipped. Both packaged runtimes passed 17 smoke checks,
+including subtitle framebuffer composition and natural advancement to a second music track.
+Linux used Xvfb/software GL and a null audio sink; Windows used the exact downloaded frozen
+runtime on the local desktop through Media Foundation. Both subtitle captures were visually
+inspected. All 307 Windows and 306 Linux runtime file hashes matched their inventories;
+installer/package hashes, the nine pinned upstream source archives and the exact project-source
+archive were verified. The agreed privacy and codec-scope wording accompanies both packages.
+
+The user subsequently reported that Windows passes testing. Record this as user-reported
+Windows acceptance of the final candidate; individual clean-machine, association and uninstall
+checks were not separately enumerated. Manual Linux/Mint acceptance of this exact package is
+next and remains pending. This documentation update does not change either binary.
+
 ## Final source checks — 2026-10-21
 
 The Windows source environment passes all 135 unit tests, Ruff lint/format and dependency
@@ -12,7 +30,7 @@ artifact results must be recorded separately and do not inherit a blanket accept
 
 > Windows playback has changed from bundled libmpv to Qt's native Media Foundation backend.
 > Windows results below describe the former renderer unless explicitly rerun and marked as Media
-> Foundation evidence. A new installer and full desktop acceptance pass are required before release.
+> Foundation evidence. The final candidate's current results and Windows acceptance are recorded above.
 
 ## Linux package, animated GIF and Trash validation — 2026-10-20
 

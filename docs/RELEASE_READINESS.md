@@ -6,6 +6,13 @@ redistribution review described in `docs/LICENSING.md`.
 
 ## Final 0.8b validation pass
 
+Candidate `f0bed107bdd836b62751f6e6369e205ecf63e2a8` passed the final two-platform
+[package/source build](https://github.com/DrakonWolfDev/AMP/actions/runs/39581705214),
+inventory/hash/source verification and 17 packaged runtime checks on each platform. On
+21 October 2026 the user reported Windows testing passed. Manual Linux/Mint acceptance of
+that exact Debian package is next. The detailed scope and remaining unverified checks are
+recorded in `TEST_MATRIX.md`; no release has been published.
+
 The release candidate includes the Linux subtitle compositing fix, deferred Windows EOF
 handoff, and separate Windows/Linux source environments. The documented privacy boundary is
 in `PRIVACY.md`; the system-codec packaging choice and patent limits are in `CODEC_AUDIT.md`.
