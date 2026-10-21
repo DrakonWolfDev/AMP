@@ -27,6 +27,8 @@ Open With menus. It deliberately does not replace existing default applications.
 
 libmpv and graphics libraries remain distribution packages. This avoids bundling the
 host's FFmpeg/libmpv stack and lets the package manager apply system security updates.
+The package declares Qt's X11 cursor, ICCCM, key-symbol and xkbcommon-X11 runtime
+dependencies, including on systems that do not already have a full desktop dependency set.
 
 ## Windows installer
 

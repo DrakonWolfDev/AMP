@@ -142,7 +142,8 @@ def main():
                     "Priority: optional",
                     "Architecture: amd64",
                     "Maintainer: Andrew Hodgson <support@wolf-forge.co.uk>",
-                    "Depends: libmpv2, libegl1, libgl1, libopengl0, libxcb-cursor0",
+                    "Depends: libmpv2, libegl1, libgl1, libopengl0, libxcb-cursor0, "
+                    "libxcb-icccm4, libxcb-keysyms1, libxkbcommon-x11-0",
                     "Homepage: https://github.com/DrakonWolfDev/AMP",
                     "Description: Private-by-design local media player",
                     " AMP displays local images and plays local video and music without accounts,",
