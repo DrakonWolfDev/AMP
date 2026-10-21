@@ -13,7 +13,9 @@ try {
         if ($Python) {
             $candidates += ,@($Python)
         } else {
-            foreach ($name in @('py', 'python', 'python3')) {
+            # Respect an activated environment or actions/setup-python on PATH
+            # before falling back to the launcher's newest installed Python.
+            foreach ($name in @('python', 'python3', 'py')) {
                 $command = Get-Command $name -CommandType Application -ErrorAction SilentlyContinue
                 if ($command -and $command.Source -notlike '*\Microsoft\WindowsApps\*') {
                     if ($name -eq 'py') { $candidates += ,@($command.Source, '-3') }
