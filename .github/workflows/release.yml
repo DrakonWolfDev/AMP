@@ -41,6 +41,10 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
   linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        format: [deb, rpm, appimage]
     needs: preflight
     runs-on: ubuntu-24.04
     steps:
@@ -51,17 +55,30 @@ jobs:
       - name: Install Linux runtime libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y libmpv2 libegl1 libopengl0 libgl1 libxcb-cursor0
+          sudo apt-get install -y libmpv2 libegl1 libopengl0 libgl1 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxkbcommon-x11-0 rpm squashfs-tools
       - name: Install pinned application and build dependencies
         run: |
           python -m pip install -e ".[dev]"
           python -m pip install -r requirements-linux-build.txt
       - name: Build Linux package
-        run: python tools/build_linux_deb.py --output artifacts/release-linux
+        run: python tools/build_linux_deb.py --format ${{ matrix.format }} --output artifacts/release-linux
+      - name: Verify RPM installation and removal on Fedora 44
+        if: matrix.format == 'rpm'
+        run: |
+          docker run --rm -v "$PWD/artifacts/release-linux:/packages:ro" fedora:44 bash -euxc '
+            dnf install -y /packages/*.rpm
+            rpm -q amp-media-player
+            test -x /opt/amp/AMP
+            dnf remove -y amp-media-player
+            test ! -e /usr/bin/amp
+          '
       - uses: actions/upload-artifact@v4
         with:
-          name: amp-release-linux-${{ github.sha }}
-          path: artifacts/release-linux/*.deb
+          name: amp-release-linux-${{ matrix.format }}-${{ github.sha }}
+          path: |
+            artifacts/release-linux/*.deb
+            artifacts/release-linux/*.rpm
+            artifacts/release-linux/*.AppImage
           if-no-files-found: error
 
   windows:
@@ -112,12 +129,14 @@ jobs:
         run: |
           test -f "release/AMP-${VERSION}-setup.exe"
           test -f "release/amp-media-player_${VERSION}_amd64.deb"
+          test -f "release/amp-media-player-${VERSION}-1.x86_64.rpm"
+          test -f "release/AMP-${VERSION}-x86_64.AppImage"
           python tools/source_compliance.py --check-ready
           python tools/source_compliance.py --download "release/AMP-${VERSION}-corresponding-source"
           git archive --format=tar.gz --prefix="AMP-${VERSION}/" -o "release/AMP-${VERSION}-corresponding-source/AMP-${VERSION}-project-source.tar.gz" HEAD
           cp docs/SOURCE_DELIVERY.md "release/AMP-${VERSION}-corresponding-source/"
           tar -czf "release/AMP-${VERSION}-source.tar.gz" -C release "AMP-${VERSION}-corresponding-source"
-          (cd release && sha256sum "AMP-${VERSION}-setup.exe" "amp-media-player_${VERSION}_amd64.deb" "AMP-${VERSION}-source.tar.gz" > SHA256SUMS.txt && sha256sum --check SHA256SUMS.txt)
+          (cd release && sha256sum "AMP-${VERSION}-setup.exe" "amp-media-player_${VERSION}_amd64.deb" "amp-media-player-${VERSION}-1.x86_64.rpm" "AMP-${VERSION}-x86_64.AppImage" "AMP-${VERSION}-source.tar.gz" > SHA256SUMS.txt && sha256sum --check SHA256SUMS.txt)
       - name: Publish GitHub prerelease
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
@@ -129,6 +148,8 @@ jobs:
           files: |
             release/AMP-${{ needs.preflight.outputs.version }}-setup.exe
             release/amp-media-player_${{ needs.preflight.outputs.version }}_amd64.deb
+            release/amp-media-player-${{ needs.preflight.outputs.version }}-1.x86_64.rpm
+            release/AMP-${{ needs.preflight.outputs.version }}-x86_64.AppImage
             release/AMP-${{ needs.preflight.outputs.version }}-source.tar.gz
             release/SHA256SUMS.txt
       - name: Request website manifest update
@@ -149,7 +170,9 @@ jobs:
                   "tag": f"v{version}",
                   "artifacts": {
                       "windows": f"AMP-{version}-setup.exe",
-                      "linux": f"amp-media-player_{version}_amd64.deb",
+                      "linux_deb": f"amp-media-player_{version}_amd64.deb",
+                      "linux_rpm": f"amp-media-player-{version}-1.x86_64.rpm",
+                      "linux_appimage": f"AMP-{version}-x86_64.AppImage",
                   },
               },
           }

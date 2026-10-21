@@ -25,6 +25,7 @@ Thumbs.db
 # Generated probe output and private media fixtures
 artifacts/
 graphify-out/
+*.rpm
 *.deb
 *.exe
 *.AppImage

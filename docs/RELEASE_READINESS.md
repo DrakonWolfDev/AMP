@@ -70,7 +70,7 @@ the before/after snapshots, so no claim about all Windows diagnostic configurati
 - Pushing a version-matched tag such as `v0.8b` runs `.github/workflows/release.yml`.
 - Publication is deliberately blocked unless the repository variable
   `AMP_BINARY_RELEASE_APPROVED` is set to `true` after the checks below are complete.
-- The workflow builds Windows and Linux from the same tag, verifies both artifacts, publishes one
+- The workflow builds Windows and Linux from the same tag, verifies Windows plus DEB, RPM and AppImage artifacts, publishes one
   GitHub prerelease, and then dispatches a manifest update to the Wolf Forge website.
 - The repository secret `WOLF_FORGE_SITE_TOKEN` must contain a fine-grained token limited to the
   `DrakonWolfDev/wolf-forge-static` repository with Contents read/write permission. A missing token

@@ -1,6 +1,6 @@
 # AMP — Andy’s Media Player
 
-A small, private-by-design desktop player for local images, videos and music on Linux Mint and Windows.
+A small, private-by-design desktop player for local images, videos and music on Linux Mint, Fedora and Windows.
 
 AMP will fit media to the viewport, offer cursor-focused zoom and drag-pan, browse neighbouring files, and save the visible media viewport as a PNG. Video playback and each window's state remain independent. No accounts, telemetry, cloud services, or media library scans.
 
@@ -39,6 +39,16 @@ sudo apt install ./artifacts/linux-deb/amp-media-player_0.8b_amd64.deb
 The package registers AMP with the desktop's **Open With** list for its supported image,
 video and audio types without changing existing defaults. It also installs the `amp`
 command, so `amp /path/to/media.mkv` works from a terminal.
+
+## RPM and AppImage builds
+
+Linux builds support DEB (Mint / Ubuntu), RPM (Fedora) and AppImage (x86_64).
+See [packaging instructions](docs/PACKAGING.md) for dependencies and installation:
+
+```sh
+.venv/bin/python tools/build_linux_deb.py --format rpm --output artifacts/linux-rpm
+.venv/bin/python tools/build_linux_deb.py --format appimage --output artifacts/linux-appimage
+```
 
 ## Linux development setup
 
@@ -141,7 +151,7 @@ The media fills the canvas. Small floating icon controls and the filename fade a
 
 The renderer probe generates synthetic local fixtures and PNGs in ignored `artifacts/probe`. Run it before the session probe. The UI and resilience probes also use playback_probe fixtures; run playback_probe first. The process probe uses resilience_probe fixtures. On this native 125% display, `QT_SCALE_FACTOR=0.8` and `1.2` exercise effective DPR 1 and 1.5; use `--output artifacts/probe-100` or `--output artifacts/probe-150` to retain separate reports. These environment overrides do not test changing OS display settings or moving between monitors. CI runs source checks and unit tests, not desktop renderer probes.
 
-The manually triggered **Package previews** GitHub Actions workflow builds an amd64 Debian package and a Windows x64 installer from the same commit. These are unsigned test artifacts, not published releases. The Windows CI runner deliberately skips the interactive GL/media smoke test; test the downloaded installer on a normal desktop before treating it as validated.
+The manually triggered **Package previews** GitHub Actions workflow builds amd64 DEB, RPM and AppImage packages and a Windows x64 installer from the same commit. These are unsigned test artifacts, not published releases. The Windows CI runner deliberately skips the interactive GL/media smoke test; test the downloaded installer on a normal desktop before treating it as validated.
 
 ## Specification
 

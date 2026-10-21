@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import importlib.metadata
 import json
+import platform
 import shutil
 import subprocess
 import sys
@@ -11,6 +12,7 @@ import tomllib
 from pathlib import Path
 
 from bundle_policy import forbidden_runtime_file
+from linux_formats import build_appimage, build_rpm
 
 
 def digest(path):
@@ -34,9 +36,12 @@ def python_license_path():
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--format", choices=("deb", "rpm", "appimage"), default="deb")
     args = parser.parse_args()
     if sys.platform != "linux":
-        parser.error("Build the Debian package on Linux.")
+        parser.error("Build Linux packages on Linux.")
+    if platform.machine() != "x86_64":
+        parser.error("Linux packages currently require an x86_64 build host.")
     root = Path(__file__).resolve().parents[1]
     output = args.output.resolve()
     if output.exists():
@@ -131,39 +136,44 @@ def main():
         shutil.copyfile(root / "THIRD_PARTY_NOTICES.md", docs / "THIRD_PARTY_NOTICES.md")
         shutil.copyfile(root / "LICENSE", docs / "copyright")
 
-        debian = package_root / "DEBIAN"
-        debian.mkdir()
-        debian.joinpath("control").write_text(
-            "\n".join(
-                (
-                    "Package: amp-media-player",
-                    f"Version: {project['version']}",
-                    "Section: video",
-                    "Priority: optional",
-                    "Architecture: amd64",
-                    "Maintainer: Andrew Hodgson <support@wolf-forge.co.uk>",
-                    "Depends: libmpv2, libegl1, libgl1, libopengl0, libxcb-cursor0, "
-                    "libxcb-icccm4, libxcb-keysyms1, libxkbcommon-x11-0",
-                    "Homepage: https://github.com/DrakonWolfDev/AMP",
-                    "Description: Private-by-design local media player",
-                    " AMP displays local images and plays local video and music without accounts,",
-                    " telemetry, cloud services, or media-library scans.",
-                    "",
-                )
-            ),
-            encoding="utf-8",
-        )
-        postinst = debian / "postinst"
-        postinst.write_text(
-            "#!/bin/sh\nset -e\n"
-            "command -v update-desktop-database >/dev/null && update-desktop-database -q || true\n"
-            "command -v gtk-update-icon-cache >/dev/null && "
-            "gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor || true\n",
-            encoding="utf-8",
-        )
-        postinst.chmod(0o755)
-        artifact = output / f"amp-media-player_{project['version']}_amd64.deb"
-        run(["dpkg-deb", "--root-owner-group", "--build", package_root, artifact], "dpkg-deb")
+        if args.format == "rpm":
+            artifact = build_rpm(package_root, output, project["version"], run)
+        elif args.format == "appimage":
+            artifact = build_appimage(package_root, output, project["version"], run, digest)
+        else:
+            debian = package_root / "DEBIAN"
+            debian.mkdir()
+            debian.joinpath("control").write_text(
+                "\n".join(
+                    (
+                        "Package: amp-media-player",
+                        f"Version: {project['version']}",
+                        "Section: video",
+                        "Priority: optional",
+                        "Architecture: amd64",
+                        "Maintainer: Andrew Hodgson <support@wolf-forge.co.uk>",
+                        "Depends: libmpv2, libegl1, libgl1, libopengl0, libxcb-cursor0, "
+                        "libxcb-icccm4, libxcb-keysyms1, libxkbcommon-x11-0",
+                        "Homepage: https://github.com/DrakonWolfDev/AMP",
+                        "Description: Private-by-design local media player",
+                        " AMP displays local images and plays local video and music without accounts,",
+                        " telemetry, cloud services, or media-library scans.",
+                        "",
+                    )
+                ),
+                encoding="utf-8",
+            )
+            postinst = debian / "postinst"
+            postinst.write_text(
+                "#!/bin/sh\nset -e\n"
+                "command -v update-desktop-database >/dev/null && update-desktop-database -q || true\n"
+                "command -v gtk-update-icon-cache >/dev/null && "
+                "gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor || true\n",
+                encoding="utf-8",
+            )
+            postinst.chmod(0o755)
+            artifact = output / f"amp-media-player_{project['version']}_amd64.deb"
+            run(["dpkg-deb", "--root-owner-group", "--build", package_root, artifact], "dpkg-deb")
         report["artifact"] = {
             "path": str(artifact),
             "bytes": artifact.stat().st_size,

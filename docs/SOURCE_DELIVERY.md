@@ -22,7 +22,7 @@ pinned by official URL and SHA-256. `QT_REDISTRIBUTION.md` maps the Qt archives 
 bundle inventory. The Windows inventory gate rejects libmpv, FFmpeg libraries and Qt's FFmpeg
 media plugin, leaving the native Windows media plugin as the only packaged playback backend.
 
-Linux obtains libmpv and its codec stack from the distribution rather than from AMP's `.deb`.
+Linux obtains libmpv and its codec stack from the distribution rather than from AMP's DEB, RPM or AppImage.
 The rebuilt Windows artifact still requires inventory inspection and clean-machine playback tests.
 
 Version 0.8b is intentionally unsigned. Release notes and the download page must say this

@@ -7,7 +7,11 @@ permissions:
   contents: read
 
 jobs:
-  linux-deb:
+  linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        format: [deb, rpm, appimage]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -17,28 +21,46 @@ jobs:
       - name: Install Linux runtime libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y libmpv2 libegl1 libopengl0 libgl1 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxkbcommon-x11-0 xvfb xauth pulseaudio pulseaudio-utils
+          sudo apt-get install -y libmpv2 libegl1 libopengl0 libgl1 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxkbcommon-x11-0 xvfb xauth pulseaudio pulseaudio-utils rpm cpio squashfs-tools
       - name: Install pinned application and build dependencies
         run: |
           python -m pip install -e ".[dev]"
           python -m pip install -r requirements-linux-build.txt
-      - name: Build Debian preview
-        run: python tools/build_linux_deb.py --output artifacts/github-linux
+      - name: Build Linux ${{ matrix.format }} preview
+        run: python tools/build_linux_deb.py --format ${{ matrix.format }} --output artifacts/github-linux
       - name: Exercise the packaged Linux player
         run: |
           python tools/release_fixtures.py --output artifacts/release-fixtures
           pulseaudio --start --exit-idle-time=-1
           pactl load-module module-null-sink sink_name=amp_test
           mkdir -p artifacts/linux-package-smoke
-          dpkg-deb -x artifacts/github-linux/*.deb artifacts/linux-package-smoke/extracted
+          case "${{ matrix.format }}" in
+            deb) dpkg-deb -x artifacts/github-linux/*.deb artifacts/linux-package-smoke/extracted ;;
+            rpm) mkdir -p artifacts/linux-package-smoke/extracted
+                 rpm2cpio artifacts/github-linux/*.rpm | (cd artifacts/linux-package-smoke/extracted && cpio -idm) ;;
+            appimage) (cd artifacts/linux-package-smoke && ../github-linux/*.AppImage --appimage-extract)
+                      mv artifacts/linux-package-smoke/squashfs-root artifacts/linux-package-smoke/extracted ;;
+          esac
           find artifacts/linux-package-smoke/extracted -name libqxcb.so -exec ldd {} \;
           xvfb-run -a env LIBGL_ALWAYS_SOFTWARE=1 QT_QPA_PLATFORM=xcb PULSE_SINK=amp_test artifacts/linux-package-smoke/extracted/opt/amp/AMP --self-test --output artifacts/linux-package-smoke/results --video "$PWD/artifacts/release-fixtures/av.mp4" --music "$PWD/artifacts/release-fixtures/tone.wav"
+      - name: Verify RPM installation and removal on Fedora 44
+        if: matrix.format == 'rpm'
+        run: |
+          docker run --rm -v "$PWD/artifacts/github-linux:/packages:ro" fedora:44 bash -euxc '
+            dnf install -y /packages/*.rpm
+            rpm -q amp-media-player
+            test -x /opt/amp/AMP
+            dnf remove -y amp-media-player
+            test ! -e /usr/bin/amp
+          '
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: AMP-Linux-amd64-${{ github.sha }}
+          name: AMP-Linux-${{ matrix.format }}-amd64-${{ github.sha }}
           path: |
             artifacts/github-linux/*.deb
+            artifacts/github-linux/*.rpm
+            artifacts/github-linux/*.AppImage
             artifacts/github-linux/*.log
             artifacts/github-linux/report.json
             artifacts/linux-package-smoke/results/*
