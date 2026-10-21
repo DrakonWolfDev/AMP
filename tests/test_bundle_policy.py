@@ -18,6 +18,21 @@ def test_rejects_unused_media_and_development_payloads():
     assert forbidden_runtime_file("runtime/libbluray-j2se.jar")
 
 
+def test_rejects_unused_qt_virtual_keyboard_and_its_qml_quick_dependencies():
+    for filename in (
+        "Qt6Qml.dll",
+        "Qt6QmlMeta.dll",
+        "Qt6Quick.dll",
+        "Qt6VirtualKeyboard.dll",
+        "qtvirtualkeyboardplugin.dll",
+        "libQt6Qml.so.6",
+        "libQt6Quick.so.6",
+        "libQt6VirtualKeyboard.so.6",
+        "libqtvirtualkeyboardplugin.so",
+    ):
+        assert forbidden_runtime_file(filename)
+
+
 def test_allows_required_amp_opengl_and_media_foundation_files():
     assert not forbidden_runtime_file("_internal/PySide6/Qt6OpenGL.dll")
     assert not forbidden_runtime_file("_internal/PySide6/Qt6Multimedia.dll")

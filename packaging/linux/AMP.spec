@@ -52,7 +52,10 @@ for name in ("binaries", "datas"):
         [
             item
             for item in getattr(a, name)
-            if "opengl/dlls/" not in item[0].replace("\\", "/").lower()
+            if not any(
+                part in item[0].replace("\\", "/").lower()
+                for part in ("opengl/dlls/", "qt6qml", "qt6quick", "qt6virtualkeyboard", "qtvirtualkeyboardplugin")
+            )
         ],
     )
 pyz = PYZ(a.pure)

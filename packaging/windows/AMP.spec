@@ -22,7 +22,7 @@ a = Analysis(
 # PyOpenGL collects legacy GLUT/GLE DLLs which AMP does not call. Exclude those
 # payloads and their dependencies.
 for name in ("binaries", "datas"):
-    setattr(a, name, [item for item in getattr(a, name) if not any(part in item[0].replace("\\", "/").lower() for part in ("qpdf", "qt6pdf", "avcodec-", "avformat-", "avutil-", "swresample-", "swscale-", "ffmpegmediaplugin", "opengl/dlls/"))])
+    setattr(a, name, [item for item in getattr(a, name) if not any(part in item[0].replace("\\", "/").lower() for part in ("qpdf", "qt6pdf", "qt6qml", "qt6quick", "qt6virtualkeyboard", "qtvirtualkeyboardplugin", "avcodec-", "avformat-", "avutil-", "swresample-", "swscale-", "ffmpegmediaplugin", "opengl/dlls/"))])
 pyz = PYZ(a.pure)
 exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name="AMP", console=False, debug=False, upx=False, icon=str(root / "amp/assets/amp.ico"))
 coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name="AMP")

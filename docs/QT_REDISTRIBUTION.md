@@ -11,6 +11,10 @@ modules:
 - `qtmultimedia`: Qt Multimedia and the native Windows Media Foundation plugin; and
 - `qtwayland`: Wayland client libraries and plugins in the Linux package.
 
+The bundle gate excludes the unused Qt virtual-keyboard input plugin and its QML/Quick
+dependencies. AMP uses Qt Widgets and its native platform text input; these additional modules
+are outside the retained runtime/source set and must not reappear through hook collection.
+
 Their official source archives and SHA-256 hashes are pinned in
 `legal/source-manifest.json`. The downloads are hash-pinned from Qt's official release metadata. The source
 archives retain their `LICENSES`, `REUSE.toml` and `qt_attribution.json` material, including the

@@ -17,6 +17,10 @@ def forbidden_runtime_file(path):
             for marker in (
                 "ffmpeg-win",
                 "qt6pdf",
+                "qt6qml",
+                "qt6quick",
+                "qt6virtualkeyboard",
+                "qtvirtualkeyboardplugin",
                 "avcodec-",
                 "avformat-",
                 "avutil-",
