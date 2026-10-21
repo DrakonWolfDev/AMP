@@ -1,28 +1,8 @@
 import hashlib
-from pathlib import Path
 
 import pytest
 
-from tools.linux_formats import build_appimage, build_rpm
-
-
-def test_rpm_preserves_payload_and_declares_external_runtime(tmp_path):
-    payload = tmp_path / "package"
-    payload.mkdir()
-
-    def run(arguments, name):
-        if name == "rpmbuild":
-            spec = Path(arguments[-1]).read_text()
-            assert "AutoReqProv: no" in spec
-            assert "Requires: mpv-libs" in spec
-            assert "/usr/share/applications/amp.desktop" in spec
-            artifact = tmp_path / "rpmbuild/RPMS/x86_64/amp-media-player-0.8b-1.x86_64.rpm"
-            artifact.parent.mkdir(parents=True)
-            artifact.write_bytes(b"validated payload")
-
-    artifact = build_rpm(payload, tmp_path, "0.8b", run)
-    assert artifact.name == "amp-media-player-0.8b-1.x86_64.rpm"
-    assert artifact.read_bytes() == b"validated payload"
+from tools.linux_formats import build_appimage
 
 
 def test_appimage_refuses_unverified_tool_before_execution(tmp_path, monkeypatch):

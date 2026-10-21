@@ -30,9 +30,48 @@ host's FFmpeg/libmpv stack and lets the package manager apply system security up
 The package declares Qt's X11 cursor, ICCCM, key-symbol and xkbcommon-X11 runtime
 dependencies, including on systems that do not already have a full desktop dependency set.
 
+## Fedora 44 RPM preview (x86_64)
+
+Build on Fedora 44 x86_64, using its system Python (currently 3.14), not on Mint
+or Ubuntu. The builder rejects other target releases and architectures.
+
+```sh
+sudo dnf install python3 python3-devel binutils rpm-build desktop-file-utils mpv-libs libglvnd-egl libglvnd-opengl libglvnd-glx xcb-util-cursor xcb-util-wm xcb-util-keysyms xcb-util-image xcb-util-renderutil libxkbcommon-x11
+python3 -m venv .venv
+.venv/bin/python -m pip install -e '.[dev]'
+.venv/bin/python -m pip install -r requirements-linux-build.txt
+.venv/bin/python tools/build_linux_rpm.py --output artifacts/fedora-rpm
+sudo dnf install ./artifacts/fedora-rpm/*.rpm
+```
+
+The builder shares the frozen runtime, inventory gate, notices and desktop layout
+with the Debian builder. It produces an unsigned upstream RPM such as
+`amp-media-player-0.8~b0-1.fc44.x86_64.rpm`. The `~b0` suffix sorts this Python beta
+before the final `0.8` RPM version. Private Qt/Python libraries do not become
+system library providers; their requirements are filtered only where the matching
+library is present in the bundle. Automatic system ABI requirements are retained
+and checked, alongside explicit libmpv/OpenGL/X11 plugin dependencies.
+
+KDE SMB drops use the optional system `kio-fuse` service (`sudo dnf install
+kio-fuse` if absent); AMP does not bundle KDE KIO or Samba. The system libmpv
+build determines codec availability. Stock Fedora HEVC support is not guaranteed;
+AMP does not enable extra repositories or install codec packs. A VP9/AAC fixture
+is available with `tools/release_fixtures.py --video-codec libvpx-vp9` for stock
+Fedora tests. H.264/HEVC acceptance must identify the actual system decoder set.
+
+To remove the preview, use `sudo dnf remove amp-media-player`. Like the Debian
+package, it leaves existing file defaults alone and uses desktop/icon file
+triggers supplied by Fedora. Preferences and user-created screenshots are not
+removed. Do not install both AMP's DEB and RPM on one system.
+
+This frozen upstream RPM is not a Fedora package collection submission. Such a
+submission would need a separate packaging review, including the distribution's
+bundling and licence-expression requirements. See
+[Fedora release review](FEDORA_RELEASE_REVIEW.md) for tested scope and remaining gates.
+
 ## RPM (Fedora, x86_64) and AppImage
 
-The Linux builder also accepts `--format rpm` or `--format appimage`. All formats
+Use the native Fedora builder above for RPM. The Debian builder also accepts `--format appimage`. All formats
 use the same tested PyInstaller payload, licence inventory and bundle exclusion policy.
 On Ubuntu 24.04 install `rpm` and `squashfs-tools` alongside the Debian runtime libraries;
 on Fedora install `rpm-build`, `python3-devel`, `mpv-libs`, `libglvnd-egl`,
@@ -41,7 +80,7 @@ on Fedora install `rpm-build`, `python3-devel`, `mpv-libs`, `libglvnd-egl`,
 virtual environment and pinned build requirements as above, then run:
 
 ```sh
-.venv/bin/python tools/build_linux_deb.py --format rpm --output artifacts/linux-rpm
+.venv/bin/python tools/build_linux_rpm.py --output artifacts/linux-rpm
 .venv/bin/python tools/build_linux_deb.py --format appimage --output artifacts/linux-appimage
 sudo dnf install ./artifacts/linux-rpm/amp-media-player-0.8b-1.x86_64.rpm
 chmod +x artifacts/linux-appimage/AMP-0.8b-x86_64.AppImage

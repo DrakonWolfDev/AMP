@@ -27,6 +27,7 @@ artifacts/
 graphify-out/
 *.rpm
 *.deb
+*.rpm
 *.exe
 *.AppImage
 *.pem

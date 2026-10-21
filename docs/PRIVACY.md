@@ -15,7 +15,11 @@ such as your public IP address. AMP does not download or install updates.
 
 Opening a network share accesses its file server. Files in cloud-backed folders may
 involve their sync provider. Those are properties of the location you select; selecting
-a file does not cause AMP to upload it to an AMP service. Website and GitHub links in
+a file does not cause AMP to upload it to an AMP service. On Linux, explicitly
+dropped SMB URLs are passed to the local KDE KIO FUSE service to obtain a
+filesystem path. KDE manages authentication, mounts and any caching. AMP does not
+persist the original URL or credentials or display raw mount-service errors.
+Normal neighbour browsing and companion-file reads also access that share. Website and GitHub links in
 About open your browser only when selected.
 
 ## Operating-system boundary

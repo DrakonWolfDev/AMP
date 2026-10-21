@@ -65,3 +65,21 @@ python-mpv path. LGPLv3/GPLv3 texts are preserved from upstream Qt's LICENSES di
 PyOpenGL's full notice is from tag 3.1.10. See docs/LICENSING.md for the distribution policy and
 outstanding release work. No codec-patent clearance is asserted by choosing an open-source licence
 or calling an operating-system decoder.
+
+## Qt Image Formats and ICU in frozen Linux builds
+
+- Qt Image Formats 6.12.0 supplies TIFF, WebP and other image plugins. Its official
+  source archive is pinned in `legal/source-manifest.json`; the incorporated libtiff
+  and libwebp copyright/licence texts and attribution records are preserved in
+  `LICENSES/Qt-ImageFormats-6.12.0-notices.txt`. Qt's own LGPLv3/GPL terms remain
+  recorded above. Source: https://download.qt.io/official_releases/qt/6.12/6.12.0/submodules/
+- The observed frozen Linux runtime includes ICU 73.2 (`libicuuc`, `libicui18n`,
+  `libicudata`). The official ICU source archive is pinned in the same manifest;
+  its complete release licence is preserved in `LICENSES/ICU-73.2.txt`.
+  Source: https://github.com/unicode-org/icu/releases/tag/release-73-2
+- Optional SMB drop resolution calls the separately installed KDE KIO FUSE service
+  over session D-Bus. AMP does not bundle KIO FUSE, KIO or Samba. QtDBus is part
+  of the existing PySide6 Essentials / Qt Base source and licence set.
+- Upstream RPM metadata uses `LicenseRef-AMP-Distribution` to refer to the
+  original component licences indexed in `LICENSES/AMP-Distribution.txt`.
+  This is an index, not a change to the components' licence terms.

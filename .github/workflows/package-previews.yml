@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        format: [deb, rpm, appimage]
+        format: [deb, appimage]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -43,16 +43,6 @@ jobs:
           esac
           find artifacts/linux-package-smoke/extracted -name libqxcb.so -exec ldd {} \;
           xvfb-run -a env LIBGL_ALWAYS_SOFTWARE=1 QT_QPA_PLATFORM=xcb PULSE_SINK=amp_test artifacts/linux-package-smoke/extracted/opt/amp/AMP --self-test --output artifacts/linux-package-smoke/results --video "$PWD/artifacts/release-fixtures/av.mp4" --music "$PWD/artifacts/release-fixtures/tone.wav"
-      - name: Verify RPM installation and removal on Fedora 44
-        if: matrix.format == 'rpm'
-        run: |
-          docker run --rm -v "$PWD/artifacts/github-linux:/packages:ro" fedora:44 bash -euxc '
-            dnf install -y /packages/*.rpm
-            rpm -q amp-media-player
-            test -x /opt/amp/AMP
-            dnf remove -y amp-media-player
-            test ! -e /usr/bin/amp
-          '
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -64,6 +54,43 @@ jobs:
             artifacts/github-linux/*.log
             artifacts/github-linux/report.json
             artifacts/linux-package-smoke/results/*
+          if-no-files-found: error
+
+  fedora-rpm:
+    runs-on: ubuntu-24.04
+    container: fedora:44
+    steps:
+      - name: Install Fedora build and desktop test dependencies
+        run: |
+          dnf install -y git python3 python3-devel python3-pip binutils rpm-build desktop-file-utils mpv-libs libglvnd-egl libglvnd-opengl libglvnd-glx xcb-util-cursor xcb-util-wm xcb-util-keysyms xcb-util-image xcb-util-renderutil libxkbcommon-x11 mesa-dri-drivers xorg-x11-server-Xvfb xauth pulseaudio pulseaudio-utils cpio findutils which tar gzip
+      - uses: actions/checkout@v4
+      - name: Install pinned application and build tools
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install -e ".[dev]"
+          .venv/bin/python -m pip install -r requirements-linux-build.txt
+      - name: Build Fedora 44 RPM preview
+        run: .venv/bin/python tools/build_linux_rpm.py --output artifacts/github-fedora
+      - name: Install and exercise the packaged Fedora player
+        run: |
+          .venv/bin/python tools/release_fixtures.py --output artifacts/fedora-fixtures --video-codec libvpx-vp9
+          dnf install -y artifacts/github-fedora/*.rpm
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=amp_test
+          xvfb-run -a env LIBGL_ALWAYS_SOFTWARE=1 QT_QPA_PLATFORM=xcb PULSE_SINK=amp_test /usr/bin/amp --self-test --output artifacts/fedora-package-smoke --video "$PWD/artifacts/fedora-fixtures/av.mp4" --music "$PWD/artifacts/fedora-fixtures/tone.wav"
+          rpm -V amp-media-player
+          dnf remove -y amp-media-player
+          test ! -e /opt/amp/AMP
+          test ! -e /usr/bin/amp
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AMP-Fedora44-x86_64-${{ github.sha }}
+          path: |
+            artifacts/github-fedora/*.rpm
+            artifacts/github-fedora/*.log
+            artifacts/github-fedora/report.json
+            artifacts/fedora-package-smoke/*
           if-no-files-found: error
 
   windows-installer:

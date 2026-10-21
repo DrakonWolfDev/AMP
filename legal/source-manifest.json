@@ -82,6 +82,24 @@
       "sha256": "ae14d9bcf1bb3c300a3ab2e6a53f50284e5c6c966a4ac4cc5aedcb1bc74e4d02",
       "status": "pinned",
       "scope": "Wayland client libraries and plugins in the Linux bundle"
+    },
+    {
+      "name": "Qt Image Formats",
+      "version": "6.12.0",
+      "filename": "qtimageformats-everywhere-src-6.12.0.tar.xz",
+      "url": "https://download.qt.io/official_releases/qt/6.12/6.12.0/submodules/qtimageformats-everywhere-src-6.12.0.tar.xz",
+      "sha256": "0943132b5db8de6b6a7f1d162682173e8763c7ed94e80fd39113292845f67762",
+      "status": "pinned",
+      "scope": "Observed in the frozen Linux runtime; retain upstream licence and attribution materials"
+    },
+    {
+      "name": "ICU",
+      "version": "73.2",
+      "filename": "icu4c-73_2-src.tgz",
+      "url": "https://github.com/unicode-org/icu/releases/download/release-73-2/icu4c-73_2-src.tgz",
+      "sha256": "818a80712ed3caacd9b652305e01afc7fa167e6f2e94996da44b90c2ab604ce1",
+      "status": "pinned",
+      "scope": "Observed in the frozen Linux runtime; retain upstream licence and attribution materials"
     }
   ]
 }

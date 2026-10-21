@@ -4,7 +4,7 @@ This is an engineering compliance record, not legal advice or patent clearance.
 
 ## Current architecture
 
-- Linux uses the distribution's `libmpv2`. The Debian archive does not contain libmpv, FFmpeg or
+- Linux uses the distribution's libmpv (`libmpv2` on Mint, `mpv-libs` on Fedora). The Linux archives does not contain libmpv, FFmpeg or
   Qt Multimedia.
 - Windows uses Qt Multimedia's native Windows backend, selected with
   `QT_MEDIA_BACKEND=windows`. Playback is provided by Windows Media Foundation and the codecs
@@ -66,3 +66,17 @@ Primary references: [Qt Multimedia backends](https://doc.qt.io/qt-6/qtmultimedia
 [Microsoft Media Foundation formats](https://learn.microsoft.com/en-us/windows/win32/medfound/supported-media-formats-in-media-foundation),
 [Qt licensing](https://doc.qt.io/qt-6/licensing.html), and
 [Qt for Python licences](https://doc.qt.io/qtforpython-6/licenses.html).
+
+## Fedora 44 preview scope
+
+The upstream RPM uses the same frozen Linux runtime and no-codec-bundling gate
+as the DEB. Its system dependency is `mpv-libs`; KIO FUSE is an optional separate
+service for explicitly dropped SMB files. Neither KIO, Samba nor additional
+codecs are bundled. Fedora's installed `libavcodec-free` is not a guarantee of
+HEVC support. On the development host, H.264 and VP9 decoded while an HEVC
+fixture failed for lack of a decoder. Do not generalise the host's installed
+OpenH264 support to a fresh Fedora installation.
+
+The 21 October preview inventory/source additions are recorded in
+`FEDORA_RELEASE_REVIEW.md` and `QT_REDISTRIBUTION.md`. Using a system decoder is
+still not a patent clearance or permission to redistribute arbitrary codec packs.

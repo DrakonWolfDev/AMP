@@ -33,6 +33,7 @@ from .dialogs import AboutDialog, HelpDialog
 from .folder_browser import FolderBrowser
 from .folder_navigator import AUDIO_SUFFIXES, IMAGE_SUFFIXES, VIDEO_SUFFIXES, navigation_steps
 from .navigation import NavigationAttempt
+from .network_drop import NetworkDropResolver
 from .settings import Preferences, SettingsDialog
 from .update_feature import UpdateFeatureMixin
 from .viewport import MediaViewport
@@ -68,6 +69,9 @@ class Window(UpdateFeatureMixin, QMainWindow):
         self.fullscreen_timer.timeout.connect(self._finish_fullscreen)
         self.fullscreen_was_maximized = False
         self.preferences = preferences or Preferences()
+        self.network_drop = NetworkDropResolver(self)
+        self.network_drop.resolved.connect(self.open_path)
+        self.network_drop.failed.connect(self.notify)
         self.setAcceptDrops(True)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.viewport = MediaViewport(self)
@@ -413,6 +417,7 @@ class Window(UpdateFeatureMixin, QMainWindow):
         self.position_overlays()
 
     def open_path(self, path, *, navigating=False):
+        self.network_drop.cancel()
         if not navigating:
             self.navigation_attempt = None
         try:
@@ -642,13 +647,22 @@ class Window(UpdateFeatureMixin, QMainWindow):
         window.show()
 
     def dragEnterEvent(self, event):
-        if event.mimeData().hasUrls() and any(url.isLocalFile() for url in event.mimeData().urls()):
+        if event.mimeData().hasUrls() and any(
+            url.isLocalFile() or (sys.platform.startswith("linux") and url.scheme() == "smb")
+            for url in event.mimeData().urls()
+        ):
             event.acceptProposedAction()
 
     def dropEvent(self, event):
         for url in event.mimeData().urls():
             if url.isLocalFile():
+                self.network_drop.cancel()
                 self.open_path(url.toLocalFile())
+                event.acceptProposedAction()
+                break
+            if sys.platform.startswith("linux") and url.scheme() == "smb":
+                self.notify("Opening network file…")
+                self.network_drop.resolve(url)
                 event.acceptProposedAction()
                 break
 

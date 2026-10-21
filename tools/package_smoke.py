@@ -94,10 +94,11 @@ def main():
             "shiboken6",
             "pyopengl",
             "mutagen",
+            "packaging",
         }
         required_packages.add("pyside6-addons" if sys.platform == "win32" else "python-mpv")
         check(
-            getattr(sys, "frozen", False) or required_packages <= package_names,
+            required_packages <= package_names,
             "Frozen executable carries runtime package metadata"
             if getattr(sys, "frozen", False)
             else "Fresh environment contains AMP's platform runtime distributions",
@@ -113,7 +114,7 @@ def main():
             frame.size() == first.viewport.size() * first.viewport.devicePixelRatioF(),
             "Installed image capture has physical viewport dimensions",
         )
-        check(first.open_path(args.video), "Installed wheel opens H.264/AAC video")
+        check(first.open_path(args.video), "Installed wheel opens local video")
         first.video_set("mute", True)
         check(second.open_path(args.video), "A second installed window opens video independently")
         second.video_set("mute", True)

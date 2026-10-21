@@ -5,51 +5,6 @@ import shutil
 import urllib.request
 
 
-def build_rpm(package_root, output, version, run):
-    top = output / "rpmbuild"
-    top.mkdir()
-    spec = top / "amp.spec"
-    spec.write_text(
-        f"""%global __os_install_post %{{nil}}
-%global debug_package %{{nil}}
-Name: amp-media-player
-Version: {version}
-Release: 1
-Summary: Private-by-design local media player
-License: AGPL-3.0-only
-URL: https://github.com/DrakonWolfDev/AMP
-BuildArch: x86_64
-AutoReqProv: no
-Requires: mpv-libs, libglvnd-egl, libglvnd-glx, libglvnd-opengl, libxcb, xcb-util-cursor, xcb-util-wm, xcb-util-keysyms, libxkbcommon-x11, fontconfig, freetype, glib2, libX11, libXext, libXrender, libXi, libSM, libICE
-Requires: glibc >= 2.39
-
-%description
-AMP displays local images and plays local video and music.
-Python and Qt are bundled; libmpv and graphics libraries are distribution-managed.
-
-%install
-mkdir -p "%{{buildroot}}"
-cp -a "{package_root}/." "%{{buildroot}}/"
-
-%files
-/opt/amp
-/usr/bin/amp
-/usr/share/applications/amp.desktop
-/usr/share/icons/hicolor/256x256/apps/amp.png
-/usr/share/doc/amp
-""",
-        encoding="utf-8",
-    )
-    run(["rpmbuild", "-bb", "--define", f"_topdir {top}", spec], "rpmbuild")
-    built = list((top / "RPMS").rglob("*.rpm"))
-    if len(built) != 1:
-        raise RuntimeError("Expected exactly one RPM artifact")
-    artifact = output / f"amp-media-player-{version}-1.x86_64.rpm"
-    shutil.copyfile(built[0], artifact)
-    run(["rpm", "-qip", artifact], "rpm-info")
-    return artifact
-
-
 def build_appimage(package_root, output, version, run, digest):
     appdir = output / "AMP.AppDir"
     shutil.copytree(package_root, appdir)

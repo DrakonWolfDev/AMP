@@ -1,0 +1,47 @@
+# Upstream frozen preview, not a submission to Fedora's package collection.
+%global debug_package %{nil}
+%global __os_install_post %{nil}
+# Bundled libraries are private to the PyInstaller runtime. Retain automatic
+# system ABI requirements without advertising private Qt/Python as providers.
+%global __provides_exclude_from ^/opt/amp/.*$
+%global __requires_exclude @PRIVATE_REQUIRES@
+
+Name:           amp-media-player
+Version:        @VERSION@
+Release:        1%{?dist}
+Summary:        Private-by-design desktop media player
+# First-party code is AGPL-3.0-only; bundled components retain their own terms.
+License:        LicenseRef-AMP-Distribution
+URL:            https://github.com/DrakonWolfDev/AMP
+Source0:        amp-runtime.tar.gz
+ExclusiveArch:  x86_64
+Requires:       mpv-libs
+Requires:       libglvnd-egl, libglvnd-glx, libglvnd-opengl
+Requires:       xcb-util-cursor, xcb-util-wm, xcb-util-keysyms, xcb-util-image, xcb-util-renderutil
+Requires:       libxkbcommon-x11, hicolor-icon-theme
+Suggests:       kio-fuse
+
+%description
+AMP displays images and plays video and music without accounts, telemetry,
+cloud services or media-library scans. libmpv and codecs are provided by the
+operating system. SMB file drops optionally use the installed KDE kio-fuse service.
+This unsigned upstream preview requires target desktop acceptance before release.
+
+%prep
+%setup -q -n amp-runtime
+
+%build
+# Runtime was built and inventoried by tools/build_linux_rpm.py.
+
+%install
+mkdir -p %{buildroot}
+cp -a opt usr %{buildroot}/
+
+%files
+/opt/amp
+/usr/bin/amp
+/usr/share/applications/amp.desktop
+/usr/share/icons/hicolor/256x256/apps/amp.png
+%dir /usr/share/doc/amp
+%doc /usr/share/doc/amp/THIRD_PARTY_NOTICES.md
+%license /usr/share/doc/amp/copyright

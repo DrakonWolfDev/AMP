@@ -1,0 +1,24 @@
+AMP distribution licence index (LicenseRef-AMP-Distribution)
+
+This reference identifies the collection of original licence terms applying to
+an upstream AMP binary distribution. It does not create a new licence, change
+any component's licence, or grant patent rights.
+
+AMP first-party code: AGPL-3.0-only; see LICENSE.
+
+The other components retain their original licences. THIRD_PARTY_NOTICES.md
+identifies their versions, sources, selected licensing routes and preserved
+licence files. The LICENSES directory includes full retained licence texts,
+ICU's release licence, Qt Image Formats' incorporated third-party notices,
+and, in frozen builds, CPython and PyInstaller licences. Installed distribution
+metadata in the frozen runtime retains additional component licence files.
+
+The published corresponding-source bundle preserves the Qt module attribution
+and licence records and exact source inputs listed in legal/source-manifest.json.
+See docs/QT_REDISTRIBUTION.md and docs/SOURCE_DELIVERY.md for the scope and
+replacement/source-delivery arrangements.
+
+The Linux distribution supplies libmpv, codecs and other excluded system
+libraries separately. Their licence terms remain applicable to those packages.
+This index is for upstream distribution metadata; it is not a Fedora package
+collection licence approval or a claim of codec-patent clearance.

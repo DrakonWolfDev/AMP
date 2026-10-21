@@ -44,7 +44,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        format: [deb, rpm, appimage]
+        format: [deb, appimage]
     needs: preflight
     runs-on: ubuntu-24.04
     steps:
@@ -62,16 +62,6 @@ jobs:
           python -m pip install -r requirements-linux-build.txt
       - name: Build Linux package
         run: python tools/build_linux_deb.py --format ${{ matrix.format }} --output artifacts/release-linux
-      - name: Verify RPM installation and removal on Fedora 44
-        if: matrix.format == 'rpm'
-        run: |
-          docker run --rm -v "$PWD/artifacts/release-linux:/packages:ro" fedora:44 bash -euxc '
-            dnf install -y /packages/*.rpm
-            rpm -q amp-media-player
-            test -x /opt/amp/AMP
-            dnf remove -y amp-media-player
-            test ! -e /usr/bin/amp
-          '
       - uses: actions/upload-artifact@v4
         with:
           name: amp-release-linux-${{ matrix.format }}-${{ github.sha }}
@@ -79,6 +69,44 @@ jobs:
             artifacts/release-linux/*.deb
             artifacts/release-linux/*.rpm
             artifacts/release-linux/*.AppImage
+          if-no-files-found: error
+
+  fedora-rpm:
+    needs: preflight
+    runs-on: ubuntu-24.04
+    container: fedora:44
+    steps:
+      - name: Install Fedora build and desktop test dependencies
+        run: |
+          dnf install -y git python3 python3-devel python3-pip binutils rpm-build desktop-file-utils mpv-libs libglvnd-egl libglvnd-opengl libglvnd-glx xcb-util-cursor xcb-util-wm xcb-util-keysyms xcb-util-image xcb-util-renderutil libxkbcommon-x11 mesa-dri-drivers xorg-x11-server-Xvfb xauth pulseaudio pulseaudio-utils cpio findutils which tar gzip
+      - uses: actions/checkout@v4
+      - name: Install pinned application and build tools
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install -e ".[dev]"
+          .venv/bin/python -m pip install -r requirements-linux-build.txt
+      - name: Build Fedora 44 RPM preview
+        run: .venv/bin/python tools/build_linux_rpm.py --output artifacts/github-fedora
+      - name: Install and exercise the packaged Fedora player
+        run: |
+          .venv/bin/python tools/release_fixtures.py --output artifacts/fedora-fixtures --video-codec libvpx-vp9
+          dnf install -y artifacts/github-fedora/*.rpm
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=amp_test
+          xvfb-run -a env LIBGL_ALWAYS_SOFTWARE=1 QT_QPA_PLATFORM=xcb PULSE_SINK=amp_test /usr/bin/amp --self-test --output artifacts/fedora-package-smoke --video "$PWD/artifacts/fedora-fixtures/av.mp4" --music "$PWD/artifacts/fedora-fixtures/tone.wav"
+          rpm -V amp-media-player
+          dnf remove -y amp-media-player
+          test ! -e /opt/amp/AMP
+          test ! -e /usr/bin/amp
+      - name: Give the Fedora asset its public release filename
+        run: |
+          version="$(.venv/bin/python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
+          mkdir -p artifacts/release-fedora
+          cp artifacts/github-fedora/*.rpm "artifacts/release-fedora/amp-media-player-${version}-1.x86_64.rpm"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: amp-release-fedora-${{ github.sha }}
+          path: artifacts/release-fedora/*.rpm
           if-no-files-found: error
 
   windows:
@@ -111,7 +139,7 @@ jobs:
           if-no-files-found: error
 
   publish:
-    needs: [preflight, linux, windows]
+    needs: [preflight, linux, fedora-rpm, windows]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
