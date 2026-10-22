@@ -17,7 +17,7 @@ from wolf_update.qt import QtUpdateChecker
 from .version import display_version
 
 UPDATE_REPOSITORY = "DrakonWolfDev/AMP"
-UPDATE_DESTINATION = "https://github.com/DrakonWolfDev/AMP/releases"
+UPDATE_DESTINATION = "https://wolf-forge.co.uk/codename-amp.html"
 UPDATE_CHANNEL = "experimental"
 
 
@@ -89,12 +89,12 @@ class UpdateFeatureMixin:
         message.setIcon(QMessageBox.Icon.Information)
         message.setText(f"AMP {display_version(release.version)} is available.")
         message.setInformativeText(
-            "AMP will open the official GitHub download page. It will not download or install "
+            "AMP will open its official Wolf Forge project page. It will not download or install "
             "anything automatically."
         )
         if release.notes:
             message.setDetailedText(release.notes)
-        download = message.addButton("Open download page", QMessageBox.ButtonRole.AcceptRole)
+        download = message.addButton("Open AMP page", QMessageBox.ButtonRole.AcceptRole)
         dismiss = message.addButton("Dismiss this version", QMessageBox.ButtonRole.DestructiveRole)
         message.addButton("Later", QMessageBox.ButtonRole.RejectRole)
         message.exec()

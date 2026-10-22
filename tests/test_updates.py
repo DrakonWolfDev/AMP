@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from amp.update_feature import UPDATE_CHANNEL
+from amp.update_feature import UPDATE_CHANNEL, UPDATE_DESTINATION
 from amp.version import display_version
 from wolf_update import CheckStatus, MemoryStateStore, UpdateApplication, UpdateService
 from wolf_update.state import UpdateState
@@ -36,6 +36,10 @@ def test_public_beta_version_keeps_its_short_label():
 
 def test_amp_accepts_beta_update_notifications():
     assert UPDATE_CHANNEL == "experimental"
+
+
+def test_amp_updates_open_the_official_project_page():
+    assert UPDATE_DESTINATION == "https://wolf-forge.co.uk/codename-amp.html"
 
 
 def test_update_service_selects_stable_release_and_never_has_download_api():
